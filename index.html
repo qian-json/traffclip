@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>traffclip</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <b>traffclip</b>
+  <span id="count"></span>
+  <input id="search" type="search" placeholder="filter">
+  <select id="region"></select>
+  <span class="gap"></span>
+  <span id="note"></span>
+  <button id="queue"></button>
+  <button id="merge" title="when queued clips of one camera overlap, save them as one video"></button>
+  <button id="settings-btn">settings</button>
+  <div id="settings" hidden>
+    <label class="opt"><input id="solo" type="checkbox"> One camera at a time</label>
+    <p>Connecting a camera disconnects the others.<br>Cameras that are recording stay connected.</p>
+    <h2>Keybinds</h2>
+    <div id="keylist"></div>
+    <p>Click a key, then press the new one.<br>Backspace clears it. Esc cancels.</p>
+  </div>
+</header>
+<main id="grid"></main>
+<div id="shade" hidden></div>
+<script src="cameras.js"></script>
+<script src="demux.js"></script>
+<script src="mp4.js"></script>
+<script src="live.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

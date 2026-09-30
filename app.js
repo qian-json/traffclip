@@ -10,29 +10,36 @@ const store = {
 };
 
 const keys = store.get('keys', {}); // camera id -> {combo, label}
-const secs = store.get('secs', {}); // camera id -> replay seconds
-const state = { queue: false, merge: store.get('merge', false), queued: [], listening: null, max: null };
+const clampSecs = (v) => Math.round(Math.min(3600, Math.max(5, +v || 30)));
+let replaySecs = clampSecs(store.get('replay', 30));
+const state = { merge: store.get('merge', false), list: [], listening: null, max: null };
 const HZ = 90000;
 
 const grid = document.getElementById('grid');
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 const cams = window.CAMERAS.map((c, i) => ({ ...c, i, live: null, buf: [], rec: null }));
 
-// ---- grid ----------------------------------------------------------------
+// Lucide icons (ISC license), inlined to stay dependency-free
+const icon = (cls, shapes) => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${shapes}</svg>`;
+const paths = (...ds) => ds.map((d) => `<path d="${d}"/>`).join('');
+const ICONS = icon('i-open', paths('M8 3H5a2 2 0 0 0-2 2v3', 'M21 8V5a2 2 0 0 0-2-2h-3', 'M3 16v3a2 2 0 0 0 2 2h3', 'M16 21h3a2 2 0 0 0 2-2v-3')) +
+  icon('i-close', paths('M8 3v3a2 2 0 0 1-2 2H3', 'M21 8h-3a2 2 0 0 1-2-2V3', 'M3 16h3a2 2 0 0 1 2 2v3', 'M16 21v-3a2 2 0 0 1 2-2h3'));
+const TAP_ICONS = icon('i-play', paths('M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z')) +
+  icon('i-stop', '<rect width="18" height="18" x="3" y="3" rx="2"/>');
+const MERGE_ICON = icon('i-merge', paths('m8 6 4-4 4 4', 'M12 2v10.3a4 4 0 0 1-1.172 2.872L4 22', 'm20 22-5-5'));
+const CLIP_ICON = icon('i-clip', paths('m12.296 3.464 3.02 3.956', 'M20.2 6 3 11l-.9-2.4c-.3-1.1.3-2.2 1.3-2.5l13.5-4c1.1-.3 2.2.3 2.5 1.3z', 'M3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z', 'm6.18 5.276 3.1 3.899'));
 
 grid.innerHTML = cams.map((c) => `
 <div class="cell" data-i="${c.i}">
   <button class="x" data-a="close" title="close (Esc)" aria-label="close">×</button>
-  <div class="view" title="open large"><img loading="lazy" alt="" src="images/${esc(c.id)}.jpg"></div>
+  <div class="view" role="button" tabindex="0" title="click to connect"><img loading="lazy" alt="" src="images/${esc(c.id)}.jpg"><span class="spin"></span><span class="tap">${TAP_ICONS}</span><button class="fs" data-a="fs" title="open large" aria-label="open large">${ICONS}</button></div>
   <div class="name" title="${esc(c.name)}">${esc(c.name)}</div>
   <div class="meta">${esc(c.region)} · ${esc(c.id)} <span class="st"></span></div>
   <div class="row">
-    <button data-a="conn">connect</button>
     <button data-a="rec" disabled>rec</button><span class="sw"></span>
     <span class="gap"></span>
-    <button data-a="clip" disabled title="save the last few seconds">clip</button>
     <button data-a="key" title="key that clips this camera">key ${esc(keys[c.id]?.label || '—')}</button>
-    <label title="replay buffer length"><input data-a="secs" type="number" min="5" max="3600" step="5" value="${secsOf(c)}">s</label>
+    <button data-a="clip" class="clip" disabled title="grab the last few seconds">clip</button>
   </div>
 </div>`).join('');
 
@@ -54,35 +61,37 @@ grid.addEventListener('click', (e) => {
   const cell = e.target.closest('.cell');
   if (!cell) return;
   const c = cams[cell.dataset.i];
+  if (e.target.closest('.fs')) {
+    cell.classList.contains('max') ? closeMax(c) : openMax(c);
+    return;
+  }
   if (e.target.closest('.view')) {
-    if (!cell.classList.contains('max')) openMax(c);
+    toggle(c);
     return;
   }
   const b = e.target.closest('button');
   if (!b) return;
   const a = b.dataset.a;
-  if (a === 'conn') c.live ? disconnect(c) : connect(c);
-  else if (a === 'rec') c.rec ? stopRec(c) : startRec(c);
+  if (a === 'rec') c.rec ? stopRec(c) : startRec(c);
   else if (a === 'clip') clip(c);
   else if (a === 'key') listen(state.listening === c.id ? null : c.id);
   else if (a === 'close') closeMax(c);
 });
 
-grid.addEventListener('change', (e) => {
-  if (e.target.dataset.a !== 'secs') return;
-  const c = cams[e.target.closest('.cell').dataset.i];
-  const v = Math.round(Math.min(3600, Math.max(5, +e.target.value || 30)));
-  e.target.value = v;
-  secs[c.id] = v;
-  store.set('secs', secs);
+grid.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && e.target.classList.contains('view')) toggle(cams[e.target.closest('.cell').dataset.i]);
 });
 
-function secsOf(c) { return secs[c.id] || 30; }
+function toggle(c) {
+  c.live ? disconnect(c) : connect(c);
+}
+
+function secsOf() { return replaySecs; }
 
 function sync(c) {
   const on = !!c.live;
   c.el.classList.toggle('on', on);
-  c.btn.conn.textContent = on ? 'disconnect' : 'connect';
+  c.view.title = on ? 'click to disconnect' : 'click to connect';
   c.btn.rec.disabled = !on;
   c.btn.clip.disabled = !on;
   c.btn.rec.textContent = c.rec ? 'stop' : 'rec';
@@ -98,7 +107,6 @@ function status(c, text, bad) {
   if (!c.flashTimer) paint(c);
 }
 
-// short-lived message, then back to the connection status
 function flash(c, text) {
   clearTimeout(c.flashTimer);
   c.st.textContent = '· ' + text;
@@ -111,8 +119,6 @@ function paint(c) {
   c.st.classList.toggle('bad', c.bad);
 }
 
-// ---- connection ------------------------------------------------------------
-
 function connect(c) {
   if (solo.checked) {
     for (const o of cams) if (o !== c && o.live && !o.rec) disconnect(o);
@@ -120,8 +126,11 @@ function connect(c) {
   const video = document.createElement('video');
   video.muted = true;
   video.playsInline = true;
-  // once real frames show, the placeholder goes away (letterbox bars turn black)
-  video.addEventListener('loadeddata', () => c.view.classList.add('live'));
+  video.addEventListener('loadeddata', () => {
+    c.view.classList.add('live');
+    c.view.classList.remove('loading');
+  });
+  c.view.classList.add('loading');
   c.view.append(video);
   c.buf = [];
   c.live = new Live(c.url, video, {
@@ -137,7 +146,7 @@ function disconnect(c) {
   c.live = null;
   c.buf = [];
   c.view.querySelector('video')?.remove();
-  c.view.classList.remove('live');
+  c.view.classList.remove('live', 'loading');
   status(c, '');
   sync(c);
 }
@@ -150,11 +159,10 @@ function onSamples(c, samples) {
       c.rec.samples.push(s);
     }
   }
-  // keep N seconds behind what's on screen, starting on a keyframe. Until
-  // video is playing there is no screen position yet, so only the cap applies
-  // (N + 1 min behind the newest frame, which also bounds memory while a
-  // hidden tab has the video paused)
-  const n = secsOf(c) * HZ;
+  // Keep N seconds behind the frame on screen, cut on a keyframe. Before
+  // playback starts, or while a hidden tab pauses the video, only the cap
+  // (newest - N - 60 s) applies.
+  const n = secsOf() * HZ;
   const shown = c.live.player.playhead();
   let from = c.live.newest - n - 60 * HZ;
   if (shown !== null) from = Math.max(from, shown - n);
@@ -175,12 +183,14 @@ function openMax(c) {
   c.spacer.style.height = c.el.offsetHeight + 'px';
   c.el.before(c.spacer);
   c.el.classList.add('max');
+  c.btn.fs.title = c.btn.fs.ariaLabel = 'back to grid (Esc)';
   shade.hidden = false;
   document.body.classList.add('maxed');
 }
 
 function closeMax(c) {
   c.el.classList.remove('max');
+  c.btn.fs.title = c.btn.fs.ariaLabel = 'open large';
   c.spacer?.remove();
   c.spacer = null;
   state.max = null;
@@ -188,12 +198,10 @@ function closeMax(c) {
   document.body.classList.remove('maxed');
 }
 
-// ---- clips & recordings ------------------------------------------------------
-
 function clip(c) {
-  if (!c.live) return flash(c, 'connect first');
+  if (!c.live) return flash(c, 'not connected');
   const end = c.live.playhead();
-  const start = end - secsOf(c) * HZ;
+  const start = end - secsOf() * HZ;
   const buf = c.buf;
   let k = 0;
   for (let i = 0; i < buf.length && buf[i].dts <= start; i++) if (buf[i].key) k = i;
@@ -244,59 +252,93 @@ function tickClock(c) {
 }
 Tick.on(() => { for (const c of cams) if (c.rec) tickClock(c); });
 
-const lengthOf = (samples) => {
-  const last = samples[samples.length - 1];
-  return (last.dts + last.dur - samples[0].dts) / HZ;
-};
-
 function output(c, item) {
-  const s = Math.round(lengthOf(item.samples));
-  const what = item.kind === 'clip' ? 'clip' : 'recording';
-  if (state.queue) {
-    state.queued.push(item);
-    flash(c, `${what} queued (${s}s)`);
-    updateQueue();
+  state.list.push(item);
+  const entry = plan().find((en) => en.parts.includes(item));
+  const s = Math.round(durOf(entry));
+  const merges = entry.parts.length - 1;
+  if (item.kind === 'clip') floatClip(c, entry.parts.length);
+  if (merges) {
+    flash(c, `${s}s`);
+    notify(`${c.name}: clip merged (${s}s)`);
   } else {
-    flash(c, `${what} saved (${s}s)`);
-    downloadAll(filesOf([item]));
+    flash(c, `${item.kind === 'clip' ? 'clip' : 'recording'} added (${s}s)`);
   }
+  updateList();
 }
 
-// overlapping or touching clips of one camera (same connection) become one
-function mergeClips(items) {
-  const clips = items.filter((it) => it.kind === 'clip')
+function floatClip(c, joined) {
+  const r = c.btn.clip.getBoundingClientRect();
+  if (!r.width) return;
+  const el = document.createElement('div');
+  el.className = 'floater';
+  el.innerHTML = `<span class="fbody"><span class="disc">${CLIP_ICON}</span>${joined > 1 ? `<span class="streak">${MERGE_ICON}${joined}</span>` : ''}</span>`;
+  el.style.left = `${r.left + r.width / 2}px`;
+  el.style.top = `${r.top}px`;
+  el.style.setProperty('--drift', `${Math.round(Math.random() * 40 - 20)}px`);
+  el.addEventListener('animationend', (e) => {
+    if (e.target === el && e.animationName === 'fade') el.remove();
+  });
+  document.body.append(el);
+}
+
+// List entries = the files that will be saved. With merge on, clips of one
+// camera (same connection) that overlap or touch share one entry. The clips
+// stay separate in state.list, so turning merge off splits them again.
+function plan() {
+  const clips = state.list.filter((it) => it.kind === 'clip')
     .sort((a, b) => a.cam.i - b.cam.i || a.conn - b.conn || a.n0 - b.n0);
-  const merged = [];
+  const out = [];
   let cur = null;
   for (const it of clips) {
-    if (cur && cur.cam === it.cam && cur.conn === it.conn && it.n0 <= cur.n1 + 1) {
-      if (it.n1 > cur.n1) {
-        const n1 = cur.n1;
-        cur.samples = cur.samples.concat(it.samples.filter((s) => s.n > n1));
-        cur.n1 = it.n1;
-      }
-      cur.merged++;
+    if (state.merge && cur && cur.cam === it.cam && cur.conn === it.conn && it.n0 <= cur.n1 + 1) {
+      cur.parts.push(it);
+      cur.n1 = Math.max(cur.n1, it.n1);
     } else {
-      if (cur) merged.push(cur);
-      cur = { ...it, merged: 1 };
+      cur = { kind: 'clip', cam: it.cam, conn: it.conn, n1: it.n1, at: it.at, parts: [it] };
+      out.push(cur);
     }
   }
-  if (cur) merged.push(cur);
-  return [...items.filter((it) => it.kind !== 'clip'), ...merged].sort((a, b) => a.at - b.at);
+  for (const it of state.list) {
+    if (it.kind !== 'clip') out.push({ kind: it.kind, cam: it.cam, at: it.at, parts: [it] });
+  }
+  return out.sort((a, b) => a.at - b.at);
 }
 
-function filesOf(items) {
+// one continuous run: each later clip adds only the frames after the last one
+function samplesOf(entry) {
+  if (entry.parts.length === 1) return entry.parts[0].samples;
+  let samples = [];
+  let n1 = -Infinity;
+  for (const p of entry.parts) {
+    samples = samples.concat(p.samples.filter((s) => s.n > n1));
+    n1 = Math.max(n1, p.n1);
+  }
+  return samples;
+}
+
+function durOf(entry) {
+  let end = 0;
+  for (const p of entry.parts) {
+    const last = p.samples[p.samples.length - 1];
+    end = Math.max(end, last.dts + last.dur);
+  }
+  return (end - entry.parts[0].samples[0].dts) / HZ;
+}
+
+function filesOf(entries) {
   const files = [];
-  for (const it of items) {
+  for (const en of entries) {
     // a mid-stream resolution change needs a new file
-    const parts = [];
-    for (const s of it.samples) {
-      const cur = parts[parts.length - 1];
+    const pieces = [];
+    for (const s of samplesOf(en)) {
+      const cur = pieces[pieces.length - 1];
       if (cur && cur[0].cfg === s.cfg) cur.push(s);
-      else if (s.key) parts.push([s]);
+      else if (s.key) pieces.push([s]);
     }
-    const base = [it.cam.id, slug(it.cam.name), stamp(it.at), it.merged > 1 ? `clip-merged${it.merged}` : it.kind].join('_');
-    parts.forEach((p, i) => files.push({ name: base + (parts.length > 1 ? '-' + (i + 1) : '') + '.mp4', blob: MP4.file(p) }));
+    const kind = en.parts.length > 1 ? `clip-merged${en.parts.length}` : en.kind;
+    const base = [en.cam.id, slug(en.cam.name), stamp(en.at), kind].join('_');
+    pieces.forEach((p, i) => files.push({ name: base + (pieces.length > 1 ? '-' + (i + 1) : '') + '.mp4', blob: MP4.file(p) }));
   }
   return files;
 }
@@ -320,43 +362,96 @@ async function downloadAll(files) {
   }
 }
 
-// ---- header ------------------------------------------------------------------
-
-const qBtn = document.getElementById('queue');
-const mBtn = document.getElementById('merge');
+const mBox = document.getElementById('merge');
 const note = document.getElementById('note');
+const qList = document.getElementById('qlist');
+const qPanel = document.getElementById('qpanel');
+const qItems = document.getElementById('qitems');
+const qAll = document.getElementById('qall');
+const qClear = document.getElementById('qclear');
+const autoRemove = document.getElementById('autoremove');
 
-qBtn.onclick = () => {
-  if (!state.queue) {
-    state.queue = true;
-  } else {
-    state.queue = false;
-    const items = state.merge ? mergeClips(state.queued) : state.queued;
-    state.queued = [];
-    if (items.length) {
-      const files = filesOf(items);
-      note.textContent = `downloading ${files.length} file${files.length > 1 ? 's' : ''}`;
-      downloadAll(files).then(() => setTimeout(() => { note.textContent = ''; }, 2000));
-    }
-  }
-  updateQueue();
-};
+autoRemove.checked = store.get('autoremove', true);
+autoRemove.onchange = () => store.set('autoremove', autoRemove.checked);
 
-mBtn.onclick = () => {
-  state.merge = !state.merge;
-  store.set('merge', state.merge);
-  updateQueue();
-};
-
-function updateQueue() {
-  const n = state.queued.length;
-  qBtn.textContent = state.queue ? `queue on${n ? ` (${n})` : ''}` : 'queue off';
-  qBtn.classList.toggle('on', state.queue);
-  qBtn.title = state.queue ? 'press to download everything queued' : 'hold downloads until pressed again';
-  mBtn.textContent = state.merge ? 'merge overlaps on' : 'merge overlaps off';
-  mBtn.classList.toggle('on', state.merge);
+function saveEntries(entries = plan()) {
+  if (!entries.length) return;
+  const files = filesOf(entries);
+  const done = new Set(entries.flatMap((en) => en.parts));
+  if (autoRemove.checked) state.list = state.list.filter((it) => !done.has(it));
+  else done.forEach((it) => { it.saved = true; });
+  notify(`saving ${files.length} file${files.length > 1 ? 's' : ''}`);
+  downloadAll(files);
+  updateList();
 }
-updateQueue();
+
+mBox.checked = state.merge;
+mBox.onchange = () => {
+  const before = plan().length;
+  state.merge = mBox.checked;
+  store.set('merge', state.merge);
+  const after = plan().length;
+  if (after !== before) {
+    notify(state.merge ? `overlapping clips merged: ${before} → ${after}` : `clips split apart: ${before} → ${after}`);
+  }
+  updateList();
+};
+
+function updateList() {
+  const n = plan().length;
+  qList.textContent = `${n} clip${n === 1 ? '' : 's'} ▾`;
+  renderList();
+}
+
+const timeOf = (d) => d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' });
+
+function renderList() {
+  if (qPanel.hidden) return;
+  const entries = plan();
+  qItems.innerHTML = entries.length ? entries.map((en, i) => {
+    const what = en.parts.length > 1 ? `${en.parts.length} clips merged` : en.kind === 'clip' ? 'clip' : 'recording';
+    const saved = en.parts.every((p) => p.saved) ? ' · saved' : '';
+    return `<div class="qrow">
+      <span class="qname">${esc(en.cam.name)}<br><span class="meta">${what} · ${clock(Math.round(durOf(en)) * 1000)} · ${timeOf(en.at)}${saved}</span></span>
+      <button data-save="${i}" title="download this one">save</button>
+      <button data-del="${i}" title="remove from the list" aria-label="remove">×</button>
+    </div>`;
+  }).join('') : '<p>No clips yet.<br>Clips and recordings show up here.</p>';
+  qAll.disabled = qClear.disabled = !entries.length;
+}
+
+qItems.addEventListener('click', (e) => {
+  const b = e.target.closest('button');
+  const en = b && plan()[b.dataset.save ?? b.dataset.del];
+  if (!en) return;
+  if (b.dataset.save !== undefined) return saveEntries([en]);
+  const drop = new Set(en.parts);
+  state.list = state.list.filter((it) => !drop.has(it));
+  updateList();
+});
+
+qAll.onclick = () => saveEntries();
+
+// clearing throws clips away, so it takes a second click
+let clearTimer = null;
+qClear.onclick = () => {
+  clearTimeout(clearTimer);
+  if (qClear.dataset.armed) {
+    state.list = [];
+    disarmClear();
+    updateList();
+    return;
+  }
+  qClear.dataset.armed = '1';
+  qClear.textContent = 'click again to clear';
+  clearTimer = setTimeout(disarmClear, 3000);
+};
+
+function disarmClear() {
+  delete qClear.dataset.armed;
+  qClear.textContent = 'clear';
+}
+updateList();
 
 const search = document.getElementById('search');
 const region = document.getElementById('region');
@@ -383,8 +478,6 @@ function updateCount() {
 }
 updateCount();
 
-// ---- keys --------------------------------------------------------------------
-
 const MODS = ['Control', 'Alt', 'Shift', 'Meta'];
 
 function comboOf(e) {
@@ -396,30 +489,45 @@ function comboOf(e) {
   return { combo: [...mods, e.code].join('+'), label: [...mods, name].join('+') };
 }
 
-// Settings > keybinds. keys['*'] clips every connected camera; any other
-// entry is one camera's id. Rows: that "all" key, then every camera that is
-// connected or already has a key.
+// keys['*'] clips every connected camera; other entries are camera ids.
 const panel = document.getElementById('settings');
 const keylist = document.getElementById('keylist');
 const setBtn = document.getElementById('settings-btn');
 const solo = document.getElementById('solo');
 solo.checked = store.get('solo', false);
 solo.onchange = () => store.set('solo', solo.checked);
-
-setBtn.onclick = () => {
-  panel.hidden = !panel.hidden;
-  setBtn.classList.toggle('on', !panel.hidden);
-  listen(null);
+const replayBox = document.getElementById('replay');
+const tutSecs = document.getElementById('tut-secs');
+replayBox.value = tutSecs.textContent = replaySecs;
+replayBox.onchange = () => {
+  replaySecs = clampSecs(replayBox.value);
+  replayBox.value = tutSecs.textContent = replaySecs;
+  store.set('replay', replaySecs);
 };
 
-function closeSettings() {
-  panel.hidden = true;
-  setBtn.classList.remove('on');
+const tutorial = document.getElementById('tutorial');
+const POPS = [[panel, setBtn], [tutorial, document.getElementById('tutorial-btn')], [tutorial, document.getElementById('help-btn')], [qPanel, qList]];
+for (const [pop, btn] of POPS) {
+  btn.onclick = () => {
+    const open = pop.hidden || !btn.classList.contains('on');
+    closePops();
+    if (!open) return;
+    pop.hidden = false;
+    btn.classList.add('on');
+    renderKeys();
+    renderList();
+  };
+}
+
+function closePops() {
+  for (const [pop, btn] of POPS) {
+    pop.hidden = true;
+    btn.classList.remove('on');
+  }
   listen(null);
 }
 
-// which key slot (camera id or '*') waits for a keypress; shown on the
-// camera's own key button and in the settings list
+// the key slot (camera id or '*') waiting for a keypress
 function listen(id) {
   const prev = state.listening;
   state.listening = id;
@@ -481,7 +589,7 @@ addEventListener('keydown', (e) => {
     return;
   }
   if (e.key === 'Escape') {
-    if (!panel.hidden) return closeSettings();
+    if (POPS.some(([pop]) => !pop.hidden)) return closePops();
     if (state.max) return closeMax(state.max);
   }
   // typing in a field never clips (checkboxes don't count)
@@ -499,11 +607,11 @@ addEventListener('keydown', (e) => {
 
 addEventListener('mousedown', (e) => {
   if (state.listening && !e.target.closest('[data-k], [data-a="key"]')) listen(null);
-  if (!panel.hidden && !e.target.closest('#settings, #settings-btn')) closeSettings();
+  if (POPS.some(([pop]) => !pop.hidden) && !e.target.closest('.pop, #settings-btn, #tutorial-btn, #help-btn, #qlist')) closePops();
 });
 
 addEventListener('beforeunload', (e) => {
-  if (state.queued.length || cams.some((c) => c.rec)) {
+  if (state.list.some((it) => !it.saved) || cams.some((c) => c.rec)) {
     e.preventDefault();
     e.returnValue = '';
   }

@@ -14,12 +14,37 @@
   <select id="region"></select>
   <span class="gap"></span>
   <span id="note"></span>
-  <button id="queue"></button>
-  <button id="merge" title="when queued clips of one camera overlap, save them as one video"></button>
+  <span class="qgroup">
+    <button id="qlist" title="see, save, and remove clips"></button>
+    <label class="sub" title="save overlapping clips of one camera as one video"><input id="merge" type="checkbox"> merge overlaps</label>
+    <button id="help-btn" class="help" title="tutorial" aria-label="tutorial">?</button>
+  </span>
+  <button id="tutorial-btn">tutorial</button>
   <button id="settings-btn">settings</button>
-  <div id="settings" hidden>
+  <div id="tutorial" class="pop" hidden>
+    <ol>
+      <li><b>Watch.</b> Click a camera to start its live feed. Click it a second time to stop. You see the road about 20 seconds late.</li>
+      <li><b>Go big.</b> Click the corner icon to open a camera large. Press Esc to return to the grid.</li>
+      <li><b>Clip.</b> Press clip to grab the last <span id="tut-secs">30</span> seconds you watched. Change that length in settings.</li>
+      <li><b>Keys.</b> Bind a key with the key button. Press that key to clip without the mouse.</li>
+      <li><b>Record.</b> Press rec to start and stop to finish. The red timer shows how long you've recorded.</li>
+      <li><b>Save.</b> You'll find your clips in the list at the top right. Save the whole list or single clips.</li>
+      <li><b>Merge.</b> Tick merge overlaps to join overlapping clips from one camera into one video.</li>
+      <li><b>Find.</b> Type a road or pick a region to narrow the grid.</li>
+    </ol>
+  </div>
+  <div id="qpanel" class="pop" hidden>
+    <h2>Clips</h2>
+    <div id="qitems"></div>
+    <div class="qfoot"><button id="qall">save all</button><button id="qclear">clear</button></div>
+  </div>
+  <div id="settings" class="pop" hidden>
+    <label class="opt">Replay buffer <input id="replay" type="number" min="5" max="3600" step="5"> seconds</label>
+    <p>How far back a clip reaches.</p>
     <label class="opt"><input id="solo" type="checkbox"> One camera at a time</label>
     <p>Connecting a camera disconnects the others.<br>Cameras that are recording stay connected.</p>
+    <label class="opt"><input id="autoremove" type="checkbox"> Remove clips after saving</label>
+    <p>Saved clips leave the clip list.</p>
     <h2>Keybinds</h2>
     <div id="keylist"></div>
     <p>Click a key, then press the new one.<br>Backspace clears it. Esc cancels.</p>

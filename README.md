@@ -4,14 +4,15 @@ Watch, clip, and record live traffic cameras. Currently every live Louisiana 511
 
 Open `index.html` in Chrome. No server, no install, no dependencies.
 
-- **connect**: plays the camera live (about 15–25 s behind real time).
-- **Click the footage**: opens the camera large. × or Esc closes it.
+- **Click the footage**: connects or disconnects the camera (live, about 15–25 s behind real time).
+- **Expand icon** (corner of the footage): opens the camera large. × or Esc closes it.
 - **rec**: records until you press stop.
-- **clip**: saves the last N seconds (the box next to it, 30 by default).
+- **clip**: grabs the last N seconds (30 by default; change it in settings).
 - **key**: a key that clips that camera. More keys are in settings.
-- **queue**: holds downloads until you press it again, then saves them all.
-- **merge overlaps**: queued clips of one camera that overlap become one video.
-- **settings**: keybinds (including one for every connected camera) and "one camera at a time".
+- **N clips** (top right): every clip and recording lands in this list. Save them all or one at a time.
+- **merge overlaps**: clips of one camera that overlap become one video.
+- **tutorial** (or **?**): a short guide.
+- **settings**: replay buffer length, "one camera at a time", "remove clips after saving", and keybinds (including one for every connected camera).
 
 Files save as `.mp4`.
 

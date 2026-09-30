@@ -1,9 +1,9 @@
 'use strict';
-// MP4 writing: init + fragments for live playback (MSE), and plain .mp4 files
-// for clips and recordings. Samples: {dts, cto, dur, key, data (AVCC), cfg}.
+// MP4 output: init and fragment boxes for MSE playback, flat .mp4 files for
+// saved clips. Sample: {dts, cto, dur, key, data (AVCC), cfg}.
 
 const MP4 = (() => {
-  const TS = 90000; // media timescale, same as MPEG-TS
+  const TS = 90000; // same clock as MPEG-TS
 
   class W {
     constructor() { this.a = []; }
@@ -70,8 +70,6 @@ const MP4 = (() => {
 
   const flagsOf = (s) => (s.key ? 0x02000000 : 0x01010000);
 
-  // ---- live (MSE) --------------------------------------------------------
-
   function init(cfg) {
     const empty = ['stts', 'stsc', 'stco'].map((t) => full(t, 0, 0, new W().u32(0)));
     empty.push(full('stsz', 0, 0, new W().u32(0).u32(0)));
@@ -103,8 +101,6 @@ const MP4 = (() => {
     for (const s of samples) { mdat.set(s.data, o); o += s.data.length; }
     return concat([moof, mdat]);
   }
-
-  // ---- files -------------------------------------------------------------
 
   function file(samples) {
     const cfg = samples[0].cfg;
@@ -161,5 +157,5 @@ const MP4 = (() => {
     return out;
   }
 
-  return { init, fragment, file, TS };
+  return { init, fragment, file };
 })();

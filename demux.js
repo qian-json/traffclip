@@ -102,7 +102,7 @@ const Demux = (() => {
     return (b[o] & 0x0e) * 536870912 + b[o + 1] * 4194304 + (b[o + 2] & 0xfe) * 16384 + b[o + 3] * 128 + (b[o + 4] >> 1);
   }
 
-  // Annex B byte stream -> NAL units (without start codes).
+  // Annex B -> NAL units, start codes stripped.
   function splitNals(p) {
     const out = [];
     const n = p.length;
@@ -123,8 +123,6 @@ const Demux = (() => {
     if (s >= 0) cut(n);
     return out;
   }
-
-  // ---- SPS -> size, aspect, codec string -------------------------------
 
   const SAR = [null, [1, 1], [12, 11], [10, 11], [16, 11], [40, 33], [24, 11], [20, 11], [32, 11],
     [80, 33], [18, 11], [15, 11], [64, 33], [160, 99], [4, 3], [3, 2], [2, 1]];

@@ -107,5 +107,6 @@ Reference for maintaining traffclip. It records constraints, external facts, and
 
 ## Repository
 
-- Commits carry only the owner's authorship, with no co-author or generated-by trailers. No remote is configured.
+- Commits carry only the owner's authorship, with no co-author or generated-by trailers.
+- Remote: `origin` at https://github.com/qian-json/traffclip (branch `main`).
 - `.gitignore`: `.DS_Store`, `__pycache__/`, `images/*.part.jpg`.

@@ -1,0 +1,912 @@
+{
+ "alx-cam-011": {
+  "name": "US 71 at LA 28 Monroe St",
+  "via": "osm",
+  "lat": 31.30476,
+  "lon": -92.47929
+ },
+ "alx-cam-012": {
+  "name": "LA 28 at John Eskew",
+  "via": "osm",
+  "lat": 31.29451,
+  "lon": -92.50053
+ },
+ "alx-cam-013": {
+  "name": "US 71 at LA 1208 Jackson St",
+  "via": "none"
+ },
+ "alx-cam-014": {
+  "name": "US 71 at Masonic Circle NW 1",
+  "via": "osm",
+  "lat": 31.27407,
+  "lon": -92.46725
+ },
+ "alx-cam-015": {
+  "name": "US 71 at Masonic Circle NW 2",
+  "via": "osm",
+  "lat": 31.27407,
+  "lon": -92.46725
+ },
+ "alx-cam-016": {
+  "name": "US 71 at Masonic Circle SW",
+  "via": "osm",
+  "lat": 31.27407,
+  "lon": -92.46725
+ },
+ "alx-cam-018": {
+  "name": "US 71 at Masonic Circle SE 2",
+  "via": "osm",
+  "lat": 31.27407,
+  "lon": -92.46725
+ },
+ "alx-cam-019": {
+  "name": "US 71 at Lee St/Horseshoe Dr",
+  "via": "osm",
+  "lat": 31.26228,
+  "lon": -92.44868
+ },
+ "alx-cam-020": {
+  "name": "US 71 at LA 3250 Sugarhouse Rd",
+  "via": "osm",
+  "lat": 31.25302,
+  "lon": -92.43792
+ },
+ "br-cam-031": {
+  "name": "Florida Blvd at Flannery Rd",
+  "via": "osm",
+  "lat": 30.46237,
+  "lon": -91.03521
+ },
+ "br-cam-040": {
+  "name": "I-10 at S Acadian",
+  "via": "osm",
+  "lat": 30.42405,
+  "lon": -91.15107
+ },
+ "br-cam-042": {
+  "name": "I-12 at Sherwood WB DMS",
+  "via": "sibling",
+  "lat": 30.43048668,
+  "lon": -91.05702972
+ },
+ "br-cam-100": {
+  "name": "LA-1 at LA 3287 American Way",
+  "via": "none"
+ },
+ "br-cam-101": {
+  "name": "LA-1 at LA 3287 American Way",
+  "via": "none"
+ },
+ "br-cam-103": {
+  "name": "I-10 at Citiplace DMS",
+  "via": "sibling",
+  "lat": 30.4218196877623,
+  "lon": -91.1295713240901
+ },
+ "br-cam-113": {
+  "name": "I-10 Highland Rd DMS",
+  "via": "osm",
+  "lat": 30.3464,
+  "lon": -91.02948
+ },
+ "br-cam-119": {
+  "name": "I-10 at LA 22 EB",
+  "via": "sibling",
+  "lat": 30.171504046368,
+  "lon": -90.8766779613954
+ },
+ "br-cam-158": {
+  "name": "Range Ave at Centerville St",
+  "via": "osm",
+  "lat": 30.48694,
+  "lon": -90.956
+ },
+ "br-cam-159": {
+  "name": "I-10/I-12 Split 3",
+  "via": "osm",
+  "lat": 30.41918,
+  "lon": -91.11826
+ },
+ "br-cam-192": {
+  "name": "I-10 at Terrace Camera 1",
+  "via": "osm",
+  "lat": 30.43638,
+  "lon": -91.17776
+ },
+ "br-cam-193": {
+  "name": "I-10 at Terrace Camera 2",
+  "via": "osm",
+  "lat": 30.43638,
+  "lon": -91.17776
+ },
+ "br-cam-194": {
+  "name": "I-12 at Airline WB Loop",
+  "via": "osm",
+  "lat": 30.42383,
+  "lon": -91.0751
+ },
+ "br-cam-230": {
+  "name": "I-10 at Old New River",
+  "via": "none"
+ },
+ "br-cam-233": {
+  "name": "I-10 at Blind River",
+  "via": "osm",
+  "lat": 30.13038,
+  "lon": -90.71557
+ },
+ "br-cam-234": {
+  "name": "I-10 at LA 641 Gramercy 1",
+  "via": "osm",
+  "lat": 30.12339,
+  "lon": -90.68183
+ },
+ "br-cam-235": {
+  "name": "I-10 at LA 641 Gramercy 2",
+  "via": "osm",
+  "lat": 30.12339,
+  "lon": -90.68183
+ },
+ "br-cam-259": {
+  "name": "I-10 at LA 415 WB DMS",
+  "via": "sibling",
+  "lat": 30.446,
+  "lon": -91.244
+ },
+ "br-cam-260": {
+  "name": "I-10 EB before LA 415 DMS",
+  "via": "osm",
+  "lat": 30.44742,
+  "lon": -91.2443
+ },
+ "br-cam-261": {
+  "name": "US 190 at Erwinville Cam 1",
+  "via": "osm",
+  "lat": 30.53334,
+  "lon": -91.40706
+ },
+ "br-cam-262": {
+  "name": "US 190 at Erwinville Cam 2",
+  "via": "osm",
+  "lat": 30.53334,
+  "lon": -91.40706
+ },
+ "br-cam-264": {
+  "name": "US 190 at Livonia Cam 1",
+  "via": "osm",
+  "lat": 30.55474,
+  "lon": -91.55597
+ },
+ "br-cam-265": {
+  "name": "US 190 at Livonia Cam 2",
+  "via": "osm",
+  "lat": 30.55474,
+  "lon": -91.55597
+ },
+ "br-cam-270": {
+  "name": "Site camera (no caption)",
+  "via": "none"
+ },
+ "br-cam-271": {
+  "name": "Site camera (no caption)",
+  "via": "none"
+ },
+ "br-cam-272": {
+  "name": "Site camera (no caption)",
+  "via": "none"
+ },
+ "br-cam-273": {
+  "name": "Site camera (no caption)",
+  "via": "none"
+ },
+ "br-cam-274": {
+  "name": "Site 5 Cam 1",
+  "via": "none"
+ },
+ "br-cam-275": {
+  "name": "Site 5 Cam 2",
+  "via": "none"
+ },
+ "br-cam-276": {
+  "name": "Site 6 Cam 1",
+  "via": "none"
+ },
+ "br-cam-278": {
+  "name": "Site 7 Cam 1",
+  "via": "none"
+ },
+ "br-cam-279": {
+  "name": "Site 7 Cam 2",
+  "via": "none"
+ },
+ "br-cam-280": {
+  "name": "Site camera (no caption)",
+  "via": "none"
+ },
+ "br-cam-281": {
+  "name": "Site 9 Cam 2",
+  "via": "none"
+ },
+ "br-cam-282": {
+  "name": "Site 11 Cam 1",
+  "via": "none"
+ },
+ "br-cam-283": {
+  "name": "Site 11 Cam 2",
+  "via": "none"
+ },
+ "br-cam-284": {
+  "name": "Site 14 Cam 1",
+  "via": "none"
+ },
+ "br-cam-285": {
+  "name": "Site 14 Cam 2",
+  "via": "none"
+ },
+ "br-cam-286": {
+  "name": "Site 16 Cam 1",
+  "via": "none"
+ },
+ "br-cam-287": {
+  "name": "Site 16 Cam 2",
+  "via": "none"
+ },
+ "br-cam-297": {
+  "name": "LA-1 at Richardson Dr",
+  "via": "osm",
+  "lat": 30.34006,
+  "lon": -91.2605
+ },
+ "br-cam-812": {
+  "name": "I-110 at Government Cam 2",
+  "via": "osm",
+  "lat": 30.44357,
+  "lon": -91.17863
+ },
+ "br-cam-813": {
+  "name": "I-110 at Florida St Cam 2",
+  "via": "sibling",
+  "lat": 30.449869,
+  "lon": -91.180209849635
+ },
+ "br-cam-817": {
+  "name": "I-110 at Gov. Mansion Cam 2",
+  "via": "none"
+ },
+ "br-cam-828": {
+  "name": "I-110 at 22nd St Cam 2",
+  "via": "osm",
+  "lat": 30.45994,
+  "lon": -91.16637
+ },
+ "br-cam-831": {
+  "name": "I-110 at Wyandotte Cam 1",
+  "via": "osm",
+  "lat": 30.48175,
+  "lon": -91.16613
+ },
+ "br-cam-832": {
+  "name": "I-110 at Wyandotte Cam 2",
+  "via": "osm",
+  "lat": 30.48175,
+  "lon": -91.16613
+ },
+ "br-cam-841": {
+  "name": "I-110 at Evangeline Cam 1",
+  "via": "osm",
+  "lat": 30.49221,
+  "lon": -91.16364
+ },
+ "br-cam-842": {
+  "name": "I-110 at Evangeline Cam 2",
+  "via": "osm",
+  "lat": 30.49221,
+  "lon": -91.16364
+ },
+ "br-cam-871": {
+  "name": "I-110 at Wilbur Cam 1",
+  "via": "osm",
+  "lat": 30.52776,
+  "lon": -91.16557
+ },
+ "br-cam-872": {
+  "name": "I-110 at Wilbur Cam 2",
+  "via": "osm",
+  "lat": 30.52776,
+  "lon": -91.16557
+ },
+ "br-cam-881": {
+  "name": "I-110 at Scotland Ave Cam 1",
+  "via": "osm",
+  "lat": 30.53609,
+  "lon": -91.17818
+ },
+ "br-cam-882": {
+  "name": "I-110 at Scotland Ave Cam 2",
+  "via": "osm",
+  "lat": 30.53609,
+  "lon": -91.17818
+ },
+ "br-cam-891": {
+  "name": "I-110 at Scenic Cam 1",
+  "via": "osm",
+  "lat": 30.45839,
+  "lon": -91.16749
+ },
+ "br-cam-892": {
+  "name": "I-110 at Scenic Hwy Cam 2",
+  "via": "osm",
+  "lat": 30.45839,
+  "lon": -91.16749
+ },
+ "laf-cam-017": {
+  "name": "US 190 at Port Barre CCTV 1",
+  "via": "osm",
+  "lat": 30.54672,
+  "lon": -91.95193
+ },
+ "laf-cam-018": {
+  "name": "US 190 at Port Barre CCTV 2",
+  "via": "osm",
+  "lat": 30.54672,
+  "lon": -91.95193
+ },
+ "laf-cam-026": {
+  "name": "I-10 at Ramah DMS",
+  "via": "sibling",
+  "lat": 30.4004653,
+  "lon": -91.50747942
+ },
+ "laf-cam-035": {
+  "name": "I-10 at Scott DMS",
+  "via": "osm",
+  "lat": 30.24702,
+  "lon": -92.09497
+ },
+ "laf-cam-067": {
+  "name": "I-10 at Riverside Overpass Cam 1",
+  "via": "none"
+ },
+ "laf-cam-068": {
+  "name": "I-10 at Riverside Overpass Cam 2",
+  "via": "none"
+ },
+ "laf-cam-072": {
+  "name": "I-10 at Egan Cam 1",
+  "via": "osm",
+  "lat": 30.23631,
+  "lon": -92.41956
+ },
+ "laf-cam-073": {
+  "name": "I-10 at Egan Cam 2",
+  "via": "osm",
+  "lat": 30.23631,
+  "lon": -92.41956
+ },
+ "laf-cam-076": {
+  "name": "I-10 at LA 91 Cam 1",
+  "via": "osm",
+  "lat": 30.23372,
+  "lon": -92.46412
+ },
+ "laf-cam-077": {
+  "name": "I-10 at LA 91 Cam 2",
+  "via": "osm",
+  "lat": 30.23372,
+  "lon": -92.46412
+ },
+ "laf-cam-080": {
+  "name": "I-10 at LA 13 Cam 1",
+  "via": "osm",
+  "lat": 30.23552,
+  "lon": -92.38537
+ },
+ "laf-cam-081": {
+  "name": "I-10 at LA 13 Cam 2",
+  "via": "osm",
+  "lat": 30.23552,
+  "lon": -92.38537
+ },
+ "laf-cam-087": {
+  "name": "I-10 at Rayne Cam 1",
+  "via": "osm",
+  "lat": 30.25222,
+  "lon": -92.2689
+ },
+ "laf-cam-088": {
+  "name": "I-10 at Rayne Cam 2",
+  "via": "osm",
+  "lat": 30.25222,
+  "lon": -92.2689
+ },
+ "laf-cam-097": {
+  "name": "I-10 at LA 93 Cam 1",
+  "via": "osm",
+  "lat": 30.24723,
+  "lon": -92.10773
+ },
+ "laf-cam-098": {
+  "name": "I-10 at LA 93 Cam 2",
+  "via": "osm",
+  "lat": 30.24723,
+  "lon": -92.10773
+ },
+ "laf-cam-099": {
+  "name": "I-10 at Ambassador Caffery Cam 1",
+  "via": "sibling",
+  "lat": 30.24681877,
+  "lon": -92.06597815
+ },
+ "laf-cam-100": {
+  "name": "I-10 at Ambassador Caffery Cam 2",
+  "via": "sibling",
+  "lat": 30.24681877,
+  "lon": -92.06597815
+ },
+ "laf-cam-101": {
+  "name": "I-10 at University Cam 1",
+  "via": "osm",
+  "lat": 30.25108,
+  "lon": -92.03614
+ },
+ "laf-cam-102": {
+  "name": "I-10 at University Cam 2",
+  "via": "osm",
+  "lat": 30.25108,
+  "lon": -92.03614
+ },
+ "lkc-cam-016": {
+  "name": "I-10 at Roanoke Tower Cam 1",
+  "via": "osm",
+  "lat": 30.24764,
+  "lon": -92.74921
+ },
+ "lkc-cam-017": {
+  "name": "I-10 at Roanoke Tower Cam 2",
+  "via": "osm",
+  "lat": 30.24764,
+  "lon": -92.74921
+ },
+ "lkc-cam-421": {
+  "name": "I-10 at N Thompson DMS",
+  "via": "osm",
+  "lat": 30.24938,
+  "lon": -93.01375
+ },
+ "lkc-cam-481": {
+  "name": "I-10 at LA 101 Cam 1",
+  "via": "osm",
+  "lat": 30.24658,
+  "lon": -92.92911
+ },
+ "lkc-cam-482": {
+  "name": "I-10 at LA 101 Cam 2",
+  "via": "osm",
+  "lat": 30.24658,
+  "lon": -92.92911
+ },
+ "lkc-cam-541": {
+  "name": "I-10 at LA 99 Cam 1",
+  "via": "osm",
+  "lat": 30.24696,
+  "lon": -92.82171
+ },
+ "lkc-cam-542": {
+  "name": "I-10 at LA 99 Cam 2",
+  "via": "osm",
+  "lat": 30.24696,
+  "lon": -92.82171
+ },
+ "lkc-cam-591": {
+  "name": "I-10 at LA 395 Cam 1",
+  "via": "osm",
+  "lat": 30.24781,
+  "lon": -92.74049
+ },
+ "lkc-cam-592": {
+  "name": "I-10 at LA 395 Cam 2",
+  "via": "osm",
+  "lat": 30.24781,
+  "lon": -92.74049
+ },
+ "lkc-cam-641": {
+  "name": "I-10 at LA 26 Cam 1",
+  "via": "none"
+ },
+ "lkc-cam-642": {
+  "name": "I-10 at LA 26 Cam 2",
+  "via": "none"
+ },
+ "lkc-cam-651": {
+  "name": "I-10 at LA 97 Cam 1",
+  "via": "none"
+ },
+ "lkc-cam-652": {
+  "name": "I-10 at LA 97 Cam 2",
+  "via": "none"
+ },
+ "lkc-cam-811": {
+  "name": "I-210 at Prien Lake Bridge Cam 1",
+  "via": "none"
+ },
+ "lkc-cam-812": {
+  "name": "I-210 at Prien Lake Bridge Cam 2",
+  "via": "none"
+ },
+ "lkc-cam-831": {
+  "name": "I-210 at Cove Ln Cam 1",
+  "via": "osm",
+  "lat": 30.19582,
+  "lon": -93.26613
+ },
+ "lkc-cam-832": {
+  "name": "I-210 at Cove Ln Cam 2",
+  "via": "osm",
+  "lat": 30.19582,
+  "lon": -93.26613
+ },
+ "lkc-cam-841": {
+  "name": "I-210 at Nelson Rd Cam 1",
+  "via": "osm",
+  "lat": 30.1964,
+  "lon": -93.24943
+ },
+ "lkc-cam-842": {
+  "name": "I-210 at Nelson Rd",
+  "via": "osm",
+  "lat": 30.1964,
+  "lon": -93.24943
+ },
+ "lkc-cam-851": {
+  "name": "I-210 at Lake St Cam 1",
+  "via": "osm",
+  "lat": 30.19701,
+  "lon": -93.23236
+ },
+ "lkc-cam-852": {
+  "name": "I-210 at Lake St Cam 2",
+  "via": "osm",
+  "lat": 30.19701,
+  "lon": -93.23236
+ },
+ "lkc-cam-861": {
+  "name": "I-210 at Ryan St Cam 1",
+  "via": "osm",
+  "lat": 30.19717,
+  "lon": -93.21864
+ },
+ "lkc-cam-862": {
+  "name": "I-210 at Ryan St Cam 2",
+  "via": "osm",
+  "lat": 30.19717,
+  "lon": -93.21864
+ },
+ "lkc-cam-871": {
+  "name": "I-210 at Enterprise Blvd",
+  "via": "osm",
+  "lat": 30.19676,
+  "lon": -93.2043
+ },
+ "lkc-cam-872": {
+  "name": "I-210 at Enterprise Cam 2",
+  "via": "osm",
+  "lat": 30.19676,
+  "lon": -93.2043
+ },
+ "lkc-cam-881": {
+  "name": "I-210 at Hwy 14 Cam 1",
+  "via": "osm",
+  "lat": 30.19721,
+  "lon": -93.1801
+ },
+ "lkc-cam-882": {
+  "name": "I-210 at Hwy 14 Cam 2",
+  "via": "osm",
+  "lat": 30.19721,
+  "lon": -93.1801
+ },
+ "lkc-cam-891": {
+  "name": "I-210 at Kayouchee Coulee Cam 1",
+  "via": "none"
+ },
+ "lkc-cam-892": {
+  "name": "I-210 at Kayouchee Coulee Cam 2",
+  "via": "none"
+ },
+ "lkc-cam-896": {
+  "name": "I-210 at Broad St Cam 1",
+  "via": "osm",
+  "lat": 30.2276,
+  "lon": -93.1685
+ },
+ "lkc-cam-897": {
+  "name": "I-210 at Broad St Cam 2",
+  "via": "osm",
+  "lat": 30.2276,
+  "lon": -93.1685
+ },
+ "mnr-cam-013": {
+  "name": "US 165 at Finks Hideaway 1",
+  "via": "osm",
+  "lat": 32.5685,
+  "lon": -92.07395
+ },
+ "mnr-cam-014": {
+  "name": "US 165 at Finks Hideaway 2",
+  "via": "osm",
+  "lat": 32.5685,
+  "lon": -92.07395
+ },
+ "mnr-cam-015": {
+  "name": "US 165 at Forsythe Cam 1",
+  "via": "osm",
+  "lat": 32.54376,
+  "lon": -92.07855
+ },
+ "mnr-cam-016": {
+  "name": "US 165 at Forsythe Cam 2",
+  "via": "osm",
+  "lat": 32.54376,
+  "lon": -92.07855
+ },
+ "mnr-cam-017": {
+  "name": "US 165 at Ferrand St 2",
+  "via": "osm",
+  "lat": 32.534,
+  "lon": -92.08088
+ },
+ "mnr-cam-018": {
+  "name": "US 165 at Ferrand St 2",
+  "via": "osm",
+  "lat": 32.534,
+  "lon": -92.08088
+ },
+ "mnr-cam-019": {
+  "name": "US 165 at Renwick Cam 1",
+  "via": "osm",
+  "lat": 32.51372,
+  "lon": -92.08073
+ },
+ "mnr-cam-020": {
+  "name": "US 165 at Renwick Cam 2",
+  "via": "osm",
+  "lat": 32.51372,
+  "lon": -92.08073
+ },
+ "mnr-cam-021": {
+  "name": "US 165 at Winnsboro",
+  "via": "osm",
+  "lat": 32.48266,
+  "lon": -92.08305
+ },
+ "mnr-cam-022": {
+  "name": "US 165 at Winnsboro Cam 2",
+  "via": "osm",
+  "lat": 32.48266,
+  "lon": -92.08305
+ },
+ "mnr-cam-023": {
+  "name": "US 165 at Richwood Cam 1",
+  "via": "osm",
+  "lat": 32.43758,
+  "lon": -92.08913
+ },
+ "mnr-cam-024": {
+  "name": "US 165 at Richwood Cam 2",
+  "via": "osm",
+  "lat": 32.43758,
+  "lon": -92.08913
+ },
+ "nor-cam-001": {
+  "name": "I-10 at Clearview Pkwy",
+  "via": "osm",
+  "lat": 29.99921,
+  "lon": -90.18434
+ },
+ "nor-cam-012": {
+  "name": "I-10 at 17th St Canal",
+  "via": "none"
+ },
+ "nor-cam-070": {
+  "name": "I-10 at Chef Menteur Camera 3",
+  "via": "sibling",
+  "lat": 30.011324,
+  "lon": -90.012804
+ },
+ "nor-cam-073": {
+  "name": "US 90B at Simon Bolivar St",
+  "via": "osm",
+  "lat": 29.9443,
+  "lon": -90.08003
+ },
+ "nor-cam-075": {
+  "name": "US 90 at St. Charles (HOV)",
+  "via": "none"
+ },
+ "nor-cam-076": {
+  "name": "US 90 at Annunciation St (HOV)",
+  "via": "none"
+ },
+ "nor-cam-079": {
+  "name": "CCC US 90B Top of Bridge",
+  "via": "none"
+ },
+ "nor-cam-080": {
+  "name": "CCC US 90 Bridge over Hermos\u2026",
+  "via": "none"
+ },
+ "nor-cam-088": {
+  "name": "CCC US 90 End of Elevated Expressway",
+  "via": "none"
+ },
+ "nor-cam-131": {
+  "name": "US 90B at Baronne Ramp Meter LB",
+  "via": "osm",
+  "lat": 29.94362,
+  "lon": -90.07561
+ },
+ "nor-cam-132": {
+  "name": "US 90B at Baronne Ramp Meter RB",
+  "via": "osm",
+  "lat": 29.94362,
+  "lon": -90.07561
+ },
+ "nor-cam-135": {
+  "name": "US 90B at Magazine St",
+  "via": "osm",
+  "lat": 29.94078,
+  "lon": -90.07055
+ },
+ "nor-cam-197": {
+  "name": "I-10 at MM 197 Hope Canal",
+  "via": "none"
+ },
+ "nor-cam-202": {
+  "name": "I-10 at 4 Mile Bridge Rese\u2026",
+  "via": "none"
+ },
+ "nor-cam-204": {
+  "name": "I-10 at 4 Mile Bridge East",
+  "via": "none"
+ },
+ "nor-cam-205": {
+  "name": "I-10 at 4 Mile Bridge East",
+  "via": "none"
+ },
+ "nor-cam-206": {
+  "name": "I-10 at LA 3188 Belle Terre 1",
+  "via": "osm",
+  "lat": 30.10319,
+  "lon": -90.50252
+ },
+ "nor-cam-207": {
+  "name": "I-10 at LA 3188 Belle Terre",
+  "via": "osm",
+  "lat": 30.10319,
+  "lon": -90.50252
+ },
+ "nor-cam-213": {
+  "name": "I-10 at BC Spillway MM 213",
+  "via": "sibling",
+  "lat": 30.06802,
+  "lon": -90.3897
+ },
+ "nor-cam-217": {
+  "name": "I-10 at MM 217 Crossover",
+  "via": "none"
+ },
+ "nor-cam-220": {
+  "name": "I-10 at I-310 Cam 3",
+  "via": "none"
+ },
+ "nor-cam-242": {
+  "name": "I-10 at Morrison Rd DMS",
+  "via": "none"
+ },
+ "nor-cam-245": {
+  "name": "I-10 at Bullard DMS",
+  "via": "osm",
+  "lat": 30.0463,
+  "lon": -89.96122
+ },
+ "ns-cam-050": {
+  "name": "I-12 at Baptist Weigh Scales Cam 1",
+  "via": "osm",
+  "lat": 30.47944,
+  "lon": -90.53318
+ },
+ "ns-cam-051": {
+  "name": "I-12 at Baptist Weigh Scales Cam 2",
+  "via": "osm",
+  "lat": 30.47944,
+  "lon": -90.53318
+ },
+ "ns-cam-057": {
+  "name": "I-12 at LA 1077",
+  "via": "osm",
+  "lat": 30.45758,
+  "lon": -90.17761
+ },
+ "ns-cam-059": {
+  "name": "I-12 at LA 21",
+  "via": "osm",
+  "lat": 30.4469,
+  "lon": -90.14032
+ },
+ "ns-cam-061": {
+  "name": "I-12 West of US 190",
+  "via": "osm",
+  "lat": 30.42916,
+  "lon": -90.08473
+ },
+ "ns-cam-254": {
+  "name": "I-10 North of US 11",
+  "via": "osm",
+  "lat": 30.1493,
+  "lon": -89.85919
+ },
+ "ns-cam-255": {
+  "name": "I-10 Twin Span South Side",
+  "via": "none"
+ },
+ "ns-cam-256": {
+  "name": "I-10 at Twin Spans MM 256.5 Cam 1",
+  "via": "none"
+ },
+ "ns-cam-257": {
+  "name": "I-10 at Twin Spans MM 256.5 Cam 2",
+  "via": "none"
+ },
+ "ns-cam-258": {
+  "name": "I-10 at MM 258 #1",
+  "via": "none"
+ },
+ "ns-cam-259": {
+  "name": "I-10 at MM 258 #2",
+  "via": "none"
+ },
+ "ns-cam-260": {
+  "name": "I-10 at Twin Spans MM 260.4 Cam 1",
+  "via": "none"
+ },
+ "ns-cam-261": {
+  "name": "I-10 at Twin Spans MM 260.4 Cam 2",
+  "via": "none"
+ },
+ "ns-cam-528": {
+  "name": "I-55 NB DMS S of I-12",
+  "via": "osm",
+  "lat": 30.47898,
+  "lon": -90.48911
+ },
+ "shr-cam-013": {
+  "name": "I-20 at Benton Rd",
+  "via": "osm",
+  "lat": 32.51642,
+  "lon": -93.71701
+ },
+ "shr-cam-031": {
+  "name": "I-20 DMS E of Monkhouse",
+  "via": "osm",
+  "lat": 32.46173,
+  "lon": -93.82749
+ },
+ "shr-cam-032": {
+  "name": "I-20 at Lakeshore Dr DMS",
+  "via": "osm",
+  "lat": 32.49202,
+  "lon": -93.76965
+ },
+ "shr-cam-118": {
+  "name": "I-20 at Bert Kouns 2",
+  "via": "osm",
+  "lat": 32.44766,
+  "lon": -93.89918
+ },
+ "shr-cam-130": {
+  "name": "I-20 at I-220 Off Ramp 2",
+  "via": "osm",
+  "lat": 32.45645,
+  "lon": -93.84468
+ }
+}

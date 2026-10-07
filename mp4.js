@@ -45,13 +45,18 @@ const MP4 = (() => {
     return full('tkhd', 0, 3, matrix(w).u32(dw * 65536).u32(cfg.height * 65536));
   }
 
-  function avc1(cfg) {
+  // AVCDecoderConfigurationRecord: the avcC box body, and WebCodecs' decoder description
+  function avcC(cfg) {
     const c = new W().u8(1, cfg.sps[1], cfg.sps[2], cfg.sps[3], 0xff, 0xe1)
       .u16(cfg.sps.length).bytes(cfg.sps).u8(1).u16(cfg.pps.length).bytes(cfg.pps);
     if ([100, 110, 122, 144].includes(cfg.profile)) {
       c.u8(0xfc | cfg.chroma, 0xf8 | cfg.depthY, 0xf8 | cfg.depthC, 0);
     }
-    const parts = [box('avcC', c.done())];
+    return c.done();
+  }
+
+  function avc1(cfg) {
+    const parts = [box('avcC', avcC(cfg))];
     if (cfg.sar[0] !== cfg.sar[1]) parts.push(box('pasp', new W().u32(cfg.sar[0]).u32(cfg.sar[1]).done()));
     const head = new W().zero(6).u16(1).zero(16).u16(cfg.width).u16(cfg.height)
       .u32(0x480000).u32(0x480000).u32(0).u16(1).zero(32).u16(0x18).u16(0xffff).done();
@@ -157,5 +162,5 @@ const MP4 = (() => {
     return out;
   }
 
-  return { init, fragment, file };
+  return { init, fragment, file, avcC };
 })();

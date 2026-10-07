@@ -9,11 +9,11 @@ const store = {
   },
 };
 
-const keys = store.get('keys', {}); // camera id -> {combo, label}
+const keys = store.get('keys', {}); // camera id, or '*' for every connected camera -> {combo, label}
 const clampSecs = (v) => Math.round(Math.min(3600, Math.max(5, +v || 30)));
 let replaySecs = clampSecs(store.get('replay', 30));
 const favs = new Set(store.get('favs', []));
-const state = { merge: store.get('merge', false), favOnly: store.get('favonly', false), list: [], listening: null, max: null };
+const state = { merge: store.get('merge', false), favOnly: store.get('favonly', false), oddOnly: false, list: [], listening: null, max: null };
 const HZ = 90000;
 
 const grid = document.getElementById('grid');
@@ -21,29 +21,49 @@ const esc = (s) => String(s).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)
 const cams = window.CAMERAS.map((c, i) => ({ ...c, i, live: null, buf: [], rec: null }));
 
 // Lucide icons (ISC license), inlined to stay dependency-free
-const icon = (cls, shapes) => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${shapes}</svg>`;
+const icon = (shapes, cls) => `<svg${cls ? ` class="${cls}"` : ''} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${shapes}</svg>`;
 const paths = (...ds) => ds.map((d) => `<path d="${d}"/>`).join('');
-const ICONS = icon('i-open', paths('M8 3H5a2 2 0 0 0-2 2v3', 'M21 8V5a2 2 0 0 0-2-2h-3', 'M3 16v3a2 2 0 0 0 2 2h3', 'M16 21h3a2 2 0 0 0 2-2v-3')) +
-  icon('i-close', paths('M8 3v3a2 2 0 0 1-2 2H3', 'M21 8h-3a2 2 0 0 1-2-2V3', 'M3 16h3a2 2 0 0 1 2 2v3', 'M16 21v-3a2 2 0 0 1 2-2h3'));
-const CONNECT_ICONS = icon('i-play', paths('M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z')) +
-  icon('i-stop', '<rect width="18" height="18" x="3" y="3" rx="2"/>');
-const MERGE_ICON = icon('i-merge', paths('m8 6 4-4 4 4', 'M12 2v10.3a4 4 0 0 1-1.172 2.872L4 22', 'm20 22-5-5'));
-const POP_ICON = icon('i-pop', paths('M21 9V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v10c0 1.1.9 2 2 2h4') + '<rect width="10" height="7" x="12" y="13" rx="2"/>');
-const STAR_ICON = icon('i-star', paths('M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z'));
-const CLIP_ICON = icon('i-clip', paths('m12.296 3.464 3.02 3.956', 'M20.2 6 3 11l-.9-2.4c-.3-1.1.3-2.2 1.3-2.5l13.5-4c1.1-.3 2.2.3 2.5 1.3z', 'M3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z', 'm6.18 5.276 3.1 3.899'));
+const ICON = {
+  expand: icon(paths('M8 3H5a2 2 0 0 0-2 2v3', 'M21 8V5a2 2 0 0 0-2-2h-3', 'M3 16v3a2 2 0 0 0 2 2h3', 'M16 21h3a2 2 0 0 0 2-2v-3'), 'i-open'),
+  collapse: icon(paths('M8 3v3a2 2 0 0 1-2 2H3', 'M21 8h-3a2 2 0 0 1-2-2V3', 'M3 16h3a2 2 0 0 1 2 2v3', 'M16 21v-3a2 2 0 0 1 2-2h3'), 'i-close'),
+  locate: icon(paths('M2 12h3', 'M19 12h3', 'M12 2v3', 'M12 19v3') + '<circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="3"/>'),
+  play: icon(paths('M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z'), 'i-play'),
+  stop: icon('<rect width="18" height="18" x="3" y="3" rx="2"/>', 'i-stop'),
+  merge: icon(paths('m8 6 4-4 4 4', 'M12 2v10.3a4 4 0 0 1-1.172 2.872L4 22', 'm20 22-5-5')),
+  pop: icon(paths('M21 9V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v10c0 1.1.9 2 2 2h4') + '<rect width="10" height="7" x="12" y="13" rx="2"/>'),
+  star: icon(paths('M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z'), 'i-star'),
+  clip: icon(paths('m12.296 3.464 3.02 3.956', 'M20.2 6 3 11l-.9-2.4c-.3-1.1.3-2.2 1.3-2.5l13.5-4c1.1-.3 2.2.3 2.5 1.3z', 'M3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z', 'm6.18 5.276 3.1 3.899')),
+  search: icon(paths('m21 21-4.34-4.34') + '<circle cx="11" cy="11" r="8"/>'),
+  grid: icon('<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>'),
+  map: icon(paths('M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z', 'M15 5.764v15', 'M9 3.236v15')),
+  cctv: icon(paths('M16.75 12h3.632a1 1 0 0 1 .894 1.447l-2.034 4.069a1 1 0 0 1-1.708.134l-2.124-2.97', 'M17.106 9.053a1 1 0 0 1 .447 1.341l-3.106 6.211a1 1 0 0 1-1.342.447L3.61 12.3a2.92 2.92 0 0 1-1.3-3.91L3.69 5.6a2.92 2.92 0 0 1 3.92-1.3z', 'M2 19h3.76a2 2 0 0 0 1.8-1.1L9 15', 'M2 21v-4', 'M7 9h.01')),
+  binoculars: icon(paths('M10 10h4', 'M19 7V4a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v3', 'M20 21a2 2 0 0 0 2-2v-3.851c0-1.39-2-2.962-2-4.829V8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v11a2 2 0 0 0 2 2z', 'M22 16H2', 'M4 21a2 2 0 0 1-2-2v-3.851c0-1.39 2-2.962 2-4.829V8a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v11a2 2 0 0 1-2 2z', 'M9 7V4a1 1 0 0 0-1-1H6a1 1 0 0 0-1 1v3')),
+  help: icon('<circle cx="12" cy="12" r="10"/>' + paths('M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3', 'M12 17h.01')),
+  settings: icon(paths('M14 17H5', 'M19 7h-9') + '<circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/>'),
+  download: icon(paths('M12 15V3', 'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4', 'm7 10 5 5 5-5')),
+  x: icon(paths('M18 6 6 18', 'm6 6 12 12')),
+  chevron: icon(paths('m6 9 6 6 6-6')),
+  plus: icon(paths('M5 12h14', 'M12 5v14')),
+  minus: icon(paths('M5 12h14')),
+};
+for (const el of document.querySelectorAll('[data-icon]')) el.insertAdjacentHTML('afterbegin', ICON[el.dataset.icon]);
+
+const REC_IDLE = '<i></i>';
+const REC_ON = ICON.stop;
 
 grid.innerHTML = cams.map((c) => `
 <div class="cell" data-i="${c.i}">
-  <button class="x" data-a="close" title="close (Esc)" aria-label="close">×</button>
-  <div class="view"><img loading="lazy" alt="" src="images/${esc(c.id)}.jpg"><span class="spin"></span><button class="cn" data-a="conn" title="connect" aria-label="connect">${CONNECT_ICONS}</button><button class="po" data-a="pop" title="open in a window" aria-label="open in a window">${POP_ICON}</button><button class="fs" data-a="fs" title="open large" aria-label="open large">${ICONS}</button></div>
-  <div class="name"><button class="star" data-a="fav">${STAR_ICON}</button><span title="${esc(c.name)}">${esc(c.name)}</span></div>
-  <div class="meta">${esc(c.region)} · ${esc(c.id)} <span class="st"></span></div>
-  <div class="row">
-    <button data-a="rec" disabled>rec</button><span class="sw"></span>
-    <span class="gap"></span>
-    <button data-a="key" title="key that clips this camera">key ${esc(keys[c.id]?.label || '—')}</button>
-    <button data-a="clip" class="clip" disabled title="grab the last few seconds">clip</button>
+  <div class="view"><img loading="lazy" alt="" src="images/${esc(c.id)}.jpg"><span class="spin"></span>
+    <button class="play" data-a="conn" title="Play" aria-label="Play ${esc(c.name)}">${ICON.play}</button>
+    <span class="chips"><span class="chip rec">REC <span class="sw"></span></span><span class="chip odd">UNUSUAL</span></span>
+    <span class="ctl"><button data-a="stop" title="Stop watching" aria-label="Stop watching">${ICON.stop}</button><button data-a="pop" title="Open in a window" aria-label="Open in a window">${ICON.pop}</button><button data-a="fs" title="Open large" aria-label="Open large">${ICON.expand}${ICON.collapse}</button></span>
   </div>
+  <div class="info">
+    <button class="star" data-a="fav">${ICON.star}</button>
+    <span class="label"><span class="nm" title="${esc(c.name)}">${esc(c.name)}</span><span class="rg">${esc(c.region)}<span class="st"></span></span></span>
+    <span class="acts"><button class="rec" data-a="rec">${REC_IDLE}</button><button class="clip" data-a="clip" aria-label="Clip">${ICON.clip}<span class="secs"></span><kbd>${esc(keys[c.id]?.label || '')}</kbd></button></span>
+  </div>
+  <button class="x" data-a="close" title="Back to the grid (Esc)" aria-label="Close">${ICON.x}</button>
 </div>`).join('');
 
 for (const el of grid.children) {
@@ -52,9 +72,16 @@ for (const el of grid.children) {
   c.view = el.querySelector('.view');
   c.st = el.querySelector('.st');
   c.sw = el.querySelector('.sw');
+  c.kbd = el.querySelector('.clip kbd');
+  c.secs = el.querySelector('.secs');
   c.btn = {};
   for (const b of el.querySelectorAll('[data-a]')) c.btn[b.dataset.a] = b;
 }
+
+const head = document.getElementById('grid-head');
+const liveBtn = document.getElementById('live-btn');
+const livePanel = document.getElementById('livepanel');
+const liveItems = document.getElementById('live-items');
 
 grid.addEventListener('error', (e) => {
   if (e.target.tagName === 'IMG') e.target.closest('.view').classList.add('none');
@@ -64,22 +91,15 @@ grid.addEventListener('click', (e) => {
   const cell = e.target.closest('.cell');
   if (!cell) return;
   const c = cams[cell.dataset.i];
-  if (e.target.closest('.fs')) {
-    cell.classList.contains('max') ? closeMax(c) : openMax(c);
-    return;
-  }
-  if (e.target.closest('.po')) {
-    if (cell.classList.contains('max')) closeMax(c);
+  const a = e.target.closest('button')?.dataset.a;
+  if (a === 'fs') state.max === c ? closeMax(c) : openMax(c);
+  else if (a === 'pop') {
+    if (state.max === c) closeMax(c);
     popOut(c);
-    return;
-  }
-  const b = e.target.closest('button');
-  if (!b) return;
-  const a = b.dataset.a;
-  if (a === 'conn') toggle(c);
+  } else if (a === 'conn' || (!a && !c.live && e.target.closest('.view'))) c.live || connect(c);
+  else if (a === 'stop') c.live && disconnect(c);
   else if (a === 'rec') c.rec ? stopRec(c) : startRec(c);
-  else if (a === 'clip') clip(c);
-  else if (a === 'key') listen(state.listening === c.id ? null : c.id);
+  else if (a === 'clip') clip(c, c.btn.clip);
   else if (a === 'close') closeMax(c);
   else if (a === 'fav') toggleFav(c);
 });
@@ -88,18 +108,13 @@ function toggle(c) {
   c.live ? disconnect(c) : connect(c);
 }
 
-function secsOf() { return replaySecs; }
-
 function sync(c) {
-  const on = !!c.live;
-  c.el.classList.toggle('on', on);
-  c.btn.conn.title = c.btn.conn.ariaLabel = on ? 'disconnect' : 'connect';
-  c.btn.rec.disabled = !on;
-  c.btn.clip.disabled = !on;
-  c.btn.rec.textContent = c.rec ? 'stop' : 'rec';
-  c.btn.rec.classList.toggle('on', !!c.rec);
+  c.el.classList.toggle('on', !!c.live);
+  c.el.classList.toggle('rec', !!c.rec);
+  c.btn.rec.innerHTML = c.rec ? REC_ON : REC_IDLE;
+  c.btn.rec.title = c.btn.rec.ariaLabel = c.rec ? 'Stop recording' : 'Record';
   if (!c.rec) c.sw.textContent = '';
-  updateCount();
+  updateHeads();
   renderKeys();
   changed();
 }
@@ -128,7 +143,6 @@ function toggleFav(c) {
   favs.has(c.id) ? favs.delete(c.id) : favs.add(c.id);
   store.set('favs', [...favs]);
   paintFav(c);
-  updateFavs();
   renderKeys();
   if (state.favOnly) filter();
   changed();
@@ -137,25 +151,13 @@ function toggleFav(c) {
 function paintFav(c) {
   const on = favs.has(c.id);
   c.el.classList.toggle('fav', on);
-  c.btn.fav.title = c.btn.fav.ariaLabel = on ? 'remove from favorites' : 'add to favorites';
+  c.btn.fav.title = c.btn.fav.ariaLabel = on ? 'Remove from favorites' : 'Add to favorites';
 }
 
+// connection trouble shows after the region; 'live' needs no words, the chip says it
 function status(c, text, bad) {
-  c.status = text;
-  c.bad = !!bad;
-  if (!c.flashTimer) paint(c);
-}
-
-function flash(c, text) {
-  clearTimeout(c.flashTimer);
-  c.st.textContent = '· ' + text;
-  c.st.classList.remove('bad');
-  c.flashTimer = setTimeout(() => { c.flashTimer = null; paint(c); }, 3000);
-}
-
-function paint(c) {
-  c.st.textContent = c.status ? '· ' + c.status : '';
-  c.st.classList.toggle('bad', c.bad);
+  c.st.textContent = text && text !== 'live' ? ' · ' + text : '';
+  c.st.classList.toggle('bad', !!bad);
 }
 
 function connect(c) {
@@ -165,7 +167,9 @@ function connect(c) {
   const video = document.createElement('video');
   video.muted = true;
   video.playsInline = true;
-  video.addEventListener('loadeddata', () => {
+  // reveal on 'playing', not 'loadeddata': the first decoded frame sits still
+  // until the player jumps to the live edge and starts
+  video.addEventListener('playing', () => {
     c.view.classList.add('live');
     c.view.classList.remove('loading');
   });
@@ -201,7 +205,7 @@ function onSamples(c, samples) {
   // Keep N seconds behind the frame on screen, cut on a keyframe. Before
   // playback starts, or while a hidden tab pauses the video, only the cap
   // (newest - N - 60 s) applies.
-  const n = secsOf() * HZ;
+  const n = replaySecs * HZ;
   const shown = c.live.player.playhead();
   let from = c.live.newest - n - 60 * HZ;
   if (shown !== null) from = Math.max(from, shown - n);
@@ -218,18 +222,21 @@ function openMax(c) {
   if (state.max) closeMax(state.max);
   if (!c.live) connect(c);
   state.max = c;
-  c.spacer = document.createElement('div');
-  c.spacer.style.height = c.el.offsetHeight + 'px';
-  c.el.before(c.spacer);
+  // a filtered-out tile has no slot to hold
+  if (!c.el.hidden) {
+    c.spacer = document.createElement('div');
+    c.spacer.style.height = c.el.offsetHeight + 'px';
+    c.el.before(c.spacer);
+  }
   c.el.classList.add('max');
-  c.btn.fs.title = c.btn.fs.ariaLabel = 'back to grid (Esc)';
+  c.btn.fs.title = c.btn.fs.ariaLabel = 'Back to the grid (Esc)';
   shade.hidden = false;
   document.body.classList.add('maxed');
 }
 
 function closeMax(c) {
   c.el.classList.remove('max');
-  c.btn.fs.title = c.btn.fs.ariaLabel = 'open large';
+  c.btn.fs.title = c.btn.fs.ariaLabel = 'Open large';
   c.spacer?.remove();
   c.spacer = null;
   state.max = null;
@@ -237,18 +244,19 @@ function closeMax(c) {
   document.body.classList.remove('maxed');
 }
 
-function clip(c) {
-  if (!c.live) return flash(c, 'not connected');
+// from: the clip button the badge floats up from; key presses use the window's when one is open
+function clip(c, from = state.max !== c && c.win ? c.win.clipBtn : c.btn.clip) {
+  if (!c.live) return notify(`${c.name} isn't playing`);
   const end = c.live.playhead();
-  const start = end - secsOf() * HZ;
+  const start = end - replaySecs * HZ;
   const buf = c.buf;
   let k = 0;
   for (let i = 0; i < buf.length && buf[i].dts <= start; i++) if (buf[i].key) k = i;
   let e = buf.length;
   while (e > k && buf[e - 1].dts >= end) e--;
   const samples = buf.slice(k, e);
-  if (!samples.length) return flash(c, 'nothing buffered yet');
-  output(c, { kind: 'clip', cam: c, conn: c.live.id, samples, n0: samples[0].n, n1: samples[samples.length - 1].n, at: new Date() });
+  if (!samples.length) return notify('Nothing to clip yet');
+  output(c, { kind: 'clip', cam: c, conn: c.live.id, samples, n0: samples[0].n, n1: samples[samples.length - 1].n, at: new Date() }, from);
 }
 
 function startRec(c) {
@@ -267,14 +275,14 @@ function stopRec(c) {
   c.rec = null;
   sync(c);
   // end on what's on screen, not on video fetched ahead of it
-  const end = c.live && c.live.player.playhead();
+  const end = c.live?.player.playhead();
   let samples = rec.samples;
-  if (end !== null && end !== undefined) {
+  if (end != null) {
     let e = samples.length;
     while (e > 0 && samples[e - 1].dts >= end) e--;
     samples = samples.slice(0, e);
   }
-  if (!samples.length) return flash(c, 'recording empty');
+  if (!samples.length) return notify('The recording was empty');
   output(c, { kind: 'rec', cam: c, samples, at: rec.at });
 }
 
@@ -287,35 +295,28 @@ const clock = (ms) => {
 };
 
 function tickClock(c) {
-  if (c.rec) c.sw.textContent = '● ' + clock(Date.now() - c.rec.t0);
+  if (c.rec) c.sw.textContent = clock(Date.now() - c.rec.t0);
 }
 Tick.on(() => { for (const c of cams) if (c.rec) tickClock(c); });
 
-function output(c, item) {
+function output(c, item, from) {
   state.list.push(item);
   const entry = plan().find((en) => en.parts.includes(item));
-  const s = Math.round(durOf(entry));
-  const merges = entry.parts.length - 1;
-  if (item.kind === 'clip') floatClip(c, entry.parts.length);
+  const len = clock(Math.round(durOf(entry)) * 1000);
+  if (from) floatClip(c, from, entry.parts.length);
   document.dispatchEvent(new CustomEvent('clipped', { detail: c }));
-  if (merges) {
-    flash(c, `${s}s`);
-    notify(`${c.name}: clip merged (${s}s)`);
-  } else {
-    flash(c, `${item.kind === 'clip' ? 'clip' : 'recording'} added (${s}s)`);
-  }
+  if (entry.parts.length > 1) notify(`Merged ${entry.parts.length} clips · ${len}`);
+  else if (item.kind === 'rec') notify(`Recording added · ${len}`);
   updateList();
 }
 
-function floatClip(c, joined) {
-  const from = c.clipFrom || c.btn.clip;
-  c.clipFrom = null;
+function floatClip(c, from, joined) {
   const r = from.getBoundingClientRect();
   // under the map the tile's button is covered; the map pulses the camera's dot instead
   if (!r.width || (from === c.btn.clip && document.body.classList.contains('mapped') && !c.el.classList.contains('max'))) return;
   const el = document.createElement('div');
   el.className = 'floater';
-  el.innerHTML = `<span class="fbody"><span class="disc">${CLIP_ICON}</span>${joined > 1 ? `<span class="streak">${MERGE_ICON}${joined}</span>` : ''}</span>`;
+  el.innerHTML = `<span class="fbody"><span class="disc">${ICON.clip}</span>${joined > 1 ? `<span class="streak">${ICON.merge}${joined}</span>` : ''}</span>`;
   el.style.left = `${r.left + r.width / 2}px`;
   el.style.top = `${r.top}px`;
   el.style.setProperty('--drift', `${Math.round(Math.random() * 40 - 20)}px`);
@@ -406,8 +407,8 @@ async function downloadAll(files) {
 }
 
 const mBox = document.getElementById('merge');
-const note = document.getElementById('note');
 const qList = document.getElementById('qlist');
+const qBadge = qList.querySelector('.badge');
 const qPanel = document.getElementById('qpanel');
 const qItems = document.getElementById('qitems');
 const qAll = document.getElementById('qall');
@@ -423,7 +424,7 @@ function saveEntries(entries = plan()) {
   const done = new Set(entries.flatMap((en) => en.parts));
   if (autoRemove.checked) state.list = state.list.filter((it) => !done.has(it));
   else done.forEach((it) => { it.saved = true; });
-  notify(`saving ${files.length} file${files.length > 1 ? 's' : ''}`);
+  notify(`Saving ${files.length} file${files.length > 1 ? 's' : ''}`);
   downloadAll(files);
   updateList();
 }
@@ -434,15 +435,15 @@ mBox.onchange = () => {
   state.merge = mBox.checked;
   store.set('merge', state.merge);
   const after = plan().length;
-  if (after !== before) {
-    notify(state.merge ? `overlapping clips merged: ${before} → ${after}` : `clips split apart: ${before} → ${after}`);
-  }
+  if (after !== before) notify(`${state.merge ? 'Merged' : 'Split'} clips: ${before} → ${after}`);
   updateList();
 };
 
 function updateList() {
   const n = plan().length;
-  qList.textContent = `${n} clip${n === 1 ? '' : 's'} ▾`;
+  qBadge.textContent = n;
+  qBadge.hidden = !n;
+  qList.title = n ? `${n} clip${n === 1 ? '' : 's'} to save` : 'Clips and recordings';
   renderList();
 }
 
@@ -452,14 +453,15 @@ function renderList() {
   if (qPanel.hidden) return;
   const entries = plan();
   qItems.innerHTML = entries.length ? entries.map((en, i) => {
-    const what = en.parts.length > 1 ? `${en.parts.length} clips merged` : en.kind === 'clip' ? 'clip' : 'recording';
+    const what = en.parts.length > 1 ? `${ICON.merge}${en.parts.length} clips merged` : en.kind === 'clip' ? 'Clip' : 'Recording';
     const saved = en.parts.every((p) => p.saved) ? ' · saved' : '';
     return `<div class="qrow">
-      <span class="qname">${esc(en.cam.name)}<br><span class="meta">${what} · ${clock(Math.round(durOf(en)) * 1000)} · ${timeOf(en.at)}${saved}</span></span>
-      <button data-save="${i}" title="download this one">save</button>
-      <button data-del="${i}" title="remove from the list" aria-label="remove">×</button>
+      <img src="images/${esc(en.cam.id)}.jpg" alt="">
+      <span class="qname"><span>${esc(en.cam.name)}</span><small>${what} · ${clock(Math.round(durOf(en)) * 1000)} · ${timeOf(en.at)}${saved}</small></span>
+      <button class="ic" data-save="${i}" title="Save" aria-label="Save">${ICON.download}</button>
+      <button class="ic" data-del="${i}" title="Remove" aria-label="Remove">${ICON.x}</button>
     </div>`;
-  }).join('') : '<p>No clips yet.<br>Clips and recordings show up here.</p>';
+  }).join('') : '<p>No clips yet.</p>';
   qAll.disabled = qClear.disabled = !entries.length;
 }
 
@@ -486,59 +488,175 @@ qClear.onclick = () => {
     return;
   }
   qClear.dataset.armed = '1';
-  qClear.textContent = 'click again to clear';
+  qClear.textContent = 'Click again to clear';
   clearTimer = setTimeout(disarmClear, 3000);
 };
 
 function disarmClear() {
   delete qClear.dataset.armed;
-  qClear.textContent = 'clear';
+  qClear.textContent = 'Clear';
 }
 updateList();
 
 const search = document.getElementById('search');
+search.placeholder = `Search ${cams.length} cameras`;
+search.oninput = filter;
+
+// region picker: a button holding the value plus a listbox of regions with their camera counts
 const region = document.getElementById('region');
-const regions = [...new Set(cams.map((c) => c.region))];
-region.innerHTML = '<option value="">all regions</option>' +
-  regions.map((r) => `<option>${esc(r)}</option>`).join('');
-search.oninput = region.onchange = filter;
+const regionList = document.getElementById('region-list');
+regionList.innerHTML = ['', ...new Set(cams.map((c) => c.region).sort())].map((r) =>
+  `<button type="button" role="option" data-v="${esc(r)}"><span>${esc(r || 'All regions')}</span><span class="n">${cams.filter((c) => !r || c.region === r).length}</span></button>`).join('');
+
+function setRegion(v) {
+  region.value = v;
+  region.firstElementChild.textContent = v || 'All regions';
+  for (const o of regionList.children) o.setAttribute('aria-selected', o.dataset.v === v);
+}
+setRegion('');
+
+regionList.addEventListener('click', (e) => {
+  const o = e.target.closest('[role=option]');
+  if (!o) return;
+  closePops();
+  if (o.dataset.v === region.value) return;
+  setRegion(o.dataset.v);
+  filter();
+  region.dispatchEvent(new Event('change'));
+});
+
+// arrows, Home/End, and type-ahead; stopping propagation keeps letters from firing clip keys
+regionList.addEventListener('keydown', (e) => {
+  const opts = [...regionList.children];
+  const i = opts.indexOf(document.activeElement);
+  const starts = (o) => o.textContent.toLowerCase().startsWith(e.key.toLowerCase());
+  let to;
+  if (e.key === 'ArrowDown') to = opts[Math.min(i + 1, opts.length - 1)];
+  else if (e.key === 'ArrowUp') to = opts[Math.max(i - 1, 0)];
+  else if (e.key === 'Home') to = opts[0];
+  else if (e.key === 'End') to = opts[opts.length - 1];
+  else if (e.key.length === 1 && e.key !== ' ') to = opts.find((o, j) => j > i && starts(o)) || opts.find(starts);
+  else return;
+  e.preventDefault();
+  e.stopPropagation();
+  to?.focus();
+});
+
+function shows(c, odd = state.oddOnly) {
+  const q = search.value.trim().toLowerCase();
+  return (!region.value || c.region === region.value) &&
+    (!state.favOnly || favs.has(c.id)) &&
+    (!odd || c.odd) &&
+    (!q || `${c.name} ${c.id} ${c.region}`.toLowerCase().includes(q));
+}
 
 function filter() {
-  const q = search.value.trim().toLowerCase();
-  for (const c of cams) {
-    const hit = (!region.value || c.region === region.value) &&
-      (!state.favOnly || favs.has(c.id)) &&
-      (!q || `${c.name} ${c.id} ${c.region}`.toLowerCase().includes(q));
-    c.el.hidden = !hit;
-  }
-  updateCount();
+  for (const c of cams) c.el.hidden = !shows(c);
+  updateHeads();
   changed();
 }
 
-const favBtn = document.getElementById('favs-btn');
-favBtn.onclick = () => {
-  state.favOnly = !state.favOnly;
-  store.set('favonly', state.favOnly);
-  updateFavs();
+function clearFilters() {
+  search.value = '';
+  setRegion('');
+  setFavOnly(false);
+  state.oddOnly = document.getElementById('odd-only').checked = false;
   filter();
+}
+
+// leaving the favorites filter returns to where the full grid was scrolled
+const favBtn = document.getElementById('favs-btn');
+let gridScroll = 0;
+favBtn.onclick = () => {
+  if (!state.favOnly) gridScroll = scrollY;
+  setFavOnly(!state.favOnly);
+  filter();
+  scrollTo(0, state.favOnly ? 0 : gridScroll);
 };
 
-function updateFavs() {
-  favBtn.innerHTML = `${STAR_ICON}${favs.size}`;
-  favBtn.classList.toggle('on', state.favOnly);
-  favBtn.title = state.favOnly ? 'showing favorites only' : 'show favorites only';
+function setFavOnly(on) {
+  state.favOnly = on;
+  store.set('favonly', on);
+  updateFavs();
 }
-cams.forEach(paintFav);
-updateFavs();
-if (state.favOnly) filter();
 
-function updateCount() {
+function updateFavs() {
+  favBtn.classList.toggle('on', state.favOnly);
+  favBtn.setAttribute('aria-pressed', state.favOnly);
+  favBtn.title = favBtn.ariaLabel = state.favOnly ? 'Showing favorites only' : 'Show favorites only';
+}
+
+function updateHeads() {
   const shown = cams.filter((c) => !c.el.hidden).length;
   const live = cams.filter((c) => c.live).length;
-  document.getElementById('count').textContent =
-    (shown === cams.length ? `${cams.length} cameras` : `${shown} of ${cams.length} cameras`) + (live ? ` · ${live} connected` : '');
+  head.querySelector('h2').textContent = !shown ? 'No cameras match' : state.favOnly ? 'Favorites' : 'All cameras';
+  head.querySelector('.n').textContent = shown || '';
+  const badge = liveBtn.querySelector('.badge');
+  badge.textContent = live;
+  badge.hidden = !live;
+  renderLive();
 }
-updateCount();
+
+// ---- playing cameras: the header's Live menu -----------------------------------
+
+let liveFrame = 0;
+function renderLive() {
+  if (livePanel.hidden) return;
+  const on = cams.filter((c) => c.live);
+  document.getElementById('live-stop').disabled = !on.length;
+  if (!on.length) {
+    liveItems.innerHTML = '<p>Nothing is playing.</p>';
+    return;
+  }
+  liveItems.innerHTML = on.map((c) => `<div class="lrow" data-i="${c.i}">
+    <span class="lthumb"><img src="images/${esc(c.id)}.jpg" alt=""><canvas></canvas></span>
+    <span class="qname"><span>${esc(c.name)}</span><small></small></span>
+    <button class="ic" data-l="find" title="Find on the page" aria-label="Find ${esc(c.name)}">${ICON.locate}</button>
+    <button class="ic" data-l="max" title="Open large" aria-label="Open ${esc(c.name)} large">${ICON.expand}</button>
+    <button class="ic" data-l="pop" title="Open in a window" aria-label="Open ${esc(c.name)} in a window">${ICON.pop}</button>
+    <button class="ic stop" data-l="stop" title="Stop watching" aria-label="Stop ${esc(c.name)}">${ICON.stop}</button>
+  </div>`).join('');
+  if (!liveFrame) liveFrame = requestAnimationFrame(drawLive);
+}
+
+// live thumbnails and status, mirrored from each tile's own video like the windows
+function drawLive() {
+  liveFrame = 0;
+  const rows = liveItems.querySelectorAll('.lrow');
+  if (livePanel.hidden || !rows.length) return;
+  for (const row of rows) {
+    const c = cams[row.dataset.i];
+    const video = c.view.classList.contains('live') ? c.view.querySelector('video') : null;
+    row.classList.toggle('on', !!video);
+    if (video) drawVideo(row.querySelector('canvas'), video);
+    const status = c.region + (c.rec ? ` · rec ${clock(Date.now() - c.rec.t0)}` : '') + c.st.textContent;
+    const small = row.querySelector('small');
+    if (small.textContent !== status) small.textContent = status;
+    small.classList.toggle('bad', !!c.rec || c.st.classList.contains('bad'));
+  }
+  liveFrame = requestAnimationFrame(drawLive);
+}
+
+liveItems.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-l]');
+  if (!b) return;
+  const c = cams[b.closest('.lrow').dataset.i];
+  const a = b.dataset.l;
+  if (a === 'stop') return c.live && disconnect(c);
+  if (a === 'find') jumpTo(c);
+  else if (a === 'max') openMax(c);
+  else popOut(c);
+});
+
+document.getElementById('live-stop').onclick = () => {
+  for (const c of cams) if (c.live) disconnect(c);
+};
+
+cams.forEach(paintFav);
+updateFavs();
+// also applies a search the browser restored on reload
+filter();
+
 
 const MODS = ['Control', 'Alt', 'Shift', 'Meta'];
 
@@ -551,7 +669,6 @@ function comboOf(e) {
   return { combo: [...mods, e.code].join('+'), label: [...mods, name].join('+') };
 }
 
-// keys['*'] clips every connected camera; other entries are camera ids.
 const panel = document.getElementById('settings');
 const keylist = document.getElementById('keylist');
 const setBtn = document.getElementById('settings-btn');
@@ -559,32 +676,54 @@ const solo = document.getElementById('solo');
 solo.checked = store.get('solo', false);
 solo.onchange = () => store.set('solo', solo.checked);
 const replayBox = document.getElementById('replay');
-const tutSecs = document.getElementById('tut-secs');
-replayBox.value = tutSecs.textContent = replaySecs;
 replayBox.onchange = () => {
   replaySecs = clampSecs(replayBox.value);
-  replayBox.value = tutSecs.textContent = replaySecs;
   store.set('replay', replaySecs);
+  paintSecs();
 };
 
-const tutorial = document.getElementById('tutorial');
-const POPS = [[panel, setBtn], [tutorial, document.getElementById('tutorial-btn')], [qPanel, qList]];
-for (const [pop, btn] of POPS) {
-  btn.onclick = () => {
-    const open = pop.hidden || !btn.classList.contains('on');
-    closePops();
-    if (!open) return;
-    pop.hidden = false;
-    btn.classList.add('on');
-    renderKeys();
-    renderList();
-  };
+function paintSecs() {
+  replayBox.value = replaySecs;
+  for (const el of document.querySelectorAll('.n-secs')) el.textContent = replaySecs;
+  for (const c of cams) {
+    c.btn.clip.title = `Clip the last ${replaySecs} seconds`;
+    c.secs.textContent = `Last ${replaySecs} s`;
+  }
+}
+paintSecs();
+
+// header popovers: [panel, button, render]; scan.js adds its own
+const POPS = [[panel, setBtn, renderKeys], [document.getElementById('tutorial'), document.getElementById('tutorial-btn')],
+  [qPanel, qList, renderList]];
+POPS.push([regionList, region, () => regionList.querySelector('[aria-selected=true]').focus()], [livePanel, liveBtn, renderLive]);
+for (const [pop, btn, render] of POPS) btn.onclick = () => togglePop(pop, btn, render);
+region.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowDown' && regionList.hidden) {
+    e.preventDefault();
+    togglePop(regionList, region, POPS.find(([p]) => p === regionList)[2]);
+  }
+});
+
+// camera panels stay open while you play, pop out, or enlarge cameras; scan.js adds its own
+const STICKY = new Set([qPanel, livePanel]);
+
+function togglePop(pop, btn, render) {
+  const open = pop.hidden;
+  closePops();
+  if (!open) return;
+  pop.hidden = false;
+  btn.classList.add('on');
+  btn.setAttribute('aria-expanded', true);
+  render?.();
 }
 
 function closePops() {
   for (const [pop, btn] of POPS) {
+    // focus inside a closing popover goes back to its button
+    if (!pop.hidden && pop.contains(document.activeElement)) btn.focus();
     pop.hidden = true;
     btn.classList.remove('on');
+    btn.setAttribute('aria-expanded', false);
   }
   listen(null);
 }
@@ -594,51 +733,40 @@ function listen(id) {
   const prev = state.listening;
   state.listening = id;
   paintKey(prev);
-  paintKey(id);
   renderKeys();
 }
 
 function paintKey(id) {
   const c = id && id !== '*' && cams.find((x) => x.id === id);
-  if (!c) return;
-  const on = state.listening === id;
-  c.btn.key.classList.toggle('on', on);
-  c.btn.key.textContent = on ? 'press a key' : 'key ' + (keys[id]?.label || '—');
+  if (c) c.kbd.textContent = keys[id]?.label || '';
 }
 
 function renderKeys() {
   if (panel.hidden) return;
   const fav = cams.filter((c) => favs.has(c.id));
-  const rows = [{ id: '*', name: 'All connected cameras' }, ...fav, ...cams.filter((c) => !favs.has(c.id) && (c.live || keys[c.id]))];
+  const rows = [{ id: '*', name: 'All live cameras' }, ...fav, ...cams.filter((c) => !favs.has(c.id) && (c.live || keys[c.id]))];
   keylist.innerHTML = rows.map((r) => {
     const listening = state.listening === r.id;
-    const star = favs.has(r.id) ? `<span class="kstar" title="favorite">${STAR_ICON}</span>` : '';
+    const star = favs.has(r.id) ? `<span class="kstar" title="Favorite">${ICON.star}</span>` : '';
     return `<div class="krow">
-      <span class="kname">${star}${esc(r.name)}${r.region ? ` <span class="meta">${esc(r.id)}</span>` : ''}</span>
-      <button data-k="${esc(r.id)}" class="${listening ? 'on' : ''}">${listening ? 'press a key' : esc(keys[r.id]?.label || '—')}</button>
-      ${keys[r.id] ? `<button data-clear="${esc(r.id)}" title="remove key" aria-label="remove key">×</button>` : '<span class="kx"></span>'}
+      <span class="kname">${star}<span>${esc(r.name)}</span></span>
+      <button data-k="${esc(r.id)}" class="kbd${listening ? ' on' : ''}${keys[r.id] ? '' : ' unset'}">${listening ? 'press a key' : esc(keys[r.id]?.label || '—')}</button>
     </div>`;
-  }).join('') + (rows.length > 1 ? '' : '<p>Connect or star a camera to give it its own key.</p>');
+  }).join('') + (rows.length > 1 ? '' : '<p>Play or star a camera to give it a key.</p>');
 }
 
 keylist.addEventListener('click', (e) => {
-  const b = e.target.closest('button');
-  if (!b) return;
-  if (b.dataset.clear) {
-    delete keys[b.dataset.clear];
-    store.set('keys', keys);
-    paintKey(b.dataset.clear);
-    renderKeys();
-  } else {
-    listen(state.listening === b.dataset.k ? null : b.dataset.k);
-  }
+  const b = e.target.closest('[data-k]');
+  if (b) listen(state.listening === b.dataset.k ? null : b.dataset.k);
 });
 
-let noteTimer = null;
+const toast = document.getElementById('toast');
+let toastTimer = null;
 function notify(text) {
-  clearTimeout(noteTimer);
-  note.textContent = text;
-  noteTimer = setTimeout(() => { note.textContent = ''; }, 2500);
+  clearTimeout(toastTimer);
+  toast.textContent = text;
+  toast.hidden = false;
+  toastTimer = setTimeout(() => { toast.hidden = true; }, 2500);
 }
 
 addEventListener('keydown', (e) => {
@@ -653,8 +781,9 @@ addEventListener('keydown', (e) => {
     return;
   }
   if (e.key === 'Escape') {
-    if (POPS.some(([pop]) => !pop.hidden)) return closePops();
+    // the large view covers the popovers, so it closes first
     if (state.max) return closeMax(state.max);
+    if (POPS.some(([pop]) => !pop.hidden)) return closePops();
   }
   // typing in a field never clips (checkboxes don't count)
   if (e.repeat || e.target.closest?.('input:not([type=checkbox]), select, textarea')) return;
@@ -665,13 +794,16 @@ addEventListener('keydown', (e) => {
   for (const cam of cams) if (keys[cam.id]?.combo === k.combo) hit.add(cam);
   if (!hit.size && !all) return;
   e.preventDefault();
-  if (!hit.size) return notify('no cameras connected');
-  hit.forEach(clip);
+  if (!hit.size) return notify('No cameras are playing');
+  for (const c of hit) clip(c);
 });
 
 addEventListener('mousedown', (e) => {
-  if (state.listening && !e.target.closest('[data-k], [data-a="key"]')) listen(null);
-  if (POPS.some(([pop]) => !pop.hidden) && !e.target.closest('.pop, #settings-btn, #tutorial-btn, #qlist')) closePops();
+  if (state.listening && !e.target.closest('[data-k]')) listen(null);
+  const open = POPS.find(([pop]) => !pop.hidden);
+  if (!open || open[0].contains(e.target) || open[1].contains(e.target)) return;
+  if (STICKY.has(open[0]) && e.target.closest('.cell, .win, .m-dot, #shade')) return;
+  closePops();
 });
 
 addEventListener('beforeunload', (e) => {

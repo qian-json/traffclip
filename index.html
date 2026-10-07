@@ -8,58 +8,76 @@
 </head>
 <body>
 <header>
-  <b>traffclip</b>
-  <input id="search" type="search" placeholder="filter">
-  <select id="region"></select>
-  <button id="favs-btn"></button>
-  <span class="seg"><button id="view-grid">grid</button><button id="view-map">map</button></span>
+  <b class="mark">traffclip</b>
+  <label class="search" data-icon="search"><input id="search" type="search" aria-label="Search cameras"></label>
+  <span class="dd"><button id="region" class="ddbtn" value="" aria-haspopup="listbox" aria-expanded="false" aria-label="Region"><span>All regions</span><i data-icon="chevron"></i></button><span id="region-list" class="ddlist" role="listbox" aria-label="Region" hidden></span></span>
+  <button id="favs-btn" class="ic" data-icon="star"></button>
+  <span class="seg" role="group" aria-label="View"><button id="view-grid" data-icon="grid">Grid</button><button id="view-map" data-icon="map">Map</button></span>
   <span class="gap"></span>
-  <button id="qlist" title="see, save, and remove clips"></button>
-  <button id="tutorial-btn">tutorial</button>
-  <button id="settings-btn">settings</button>
+  <span class="dd"><button id="scan-btn" data-icon="binoculars" title="Find unusual cameras" aria-haspopup="true" aria-expanded="false"><span></span></button>
+    <div id="scanmenu" class="menu" hidden>
+      <div class="mhead"><b>Scan</b><span id="scan-age" class="meta"></span></div>
+      <div id="scan-progress" hidden><span class="bar"><i></i></span><span id="scan-pct"></span></div>
+      <div id="scan-stats"></div>
+      <small id="scan-scope"></small>
+      <div class="mfoot"><button id="scan-go" class="sm primary"></button><button id="scan-view" class="sm" hidden></button></div>
+    </div>
+  </span>
+  <button id="live-btn" data-icon="cctv" title="Playing cameras" aria-haspopup="true" aria-expanded="false">Live<span class="badge" hidden></span></button>
+  <button id="qlist" data-icon="clip">Clips<span class="badge" hidden></span></button>
+  <button id="tutorial-btn" class="ic" data-icon="help" title="Help" aria-label="Help"></button>
+  <button id="settings-btn" class="ic" data-icon="settings" title="Settings" aria-label="Settings"></button>
   <div id="tutorial" class="pop" hidden>
+    <h2>Help</h2>
     <ol>
-      <li><b>Watch.</b> Hover a camera and click the play icon in its corner to start the live feed. Click the stop icon to end it. You see the road about 20 seconds late.</li>
-      <li><b>Go big.</b> Click the corner icon to open a camera large. Press Esc to return to the grid.</li>
-      <li><b>Pop out.</b> Click the window icon to watch a camera in a small window. Drag its bar to move it and its corner to resize it.</li>
-      <li><b>Clip.</b> Press clip to grab the last <span id="tut-secs">30</span> seconds you watched. Change that length in settings.</li>
-      <li><b>Keys.</b> Bind a key with the key button. Press that key to clip without the mouse.</li>
-      <li><b>Record.</b> Press rec to start and stop to finish. The red timer shows how long you've recorded.</li>
-      <li><b>Save.</b> You'll find your clips in the list at the top right. Save the whole list or single clips.</li>
-      <li><b>Merge.</b> Turn on merge overlaps in settings to join overlapping clips from one camera into one video.</li>
-      <li><b>Favorites.</b> Star a camera to mark it. Press the star in the header to see only your favorites.</li>
-      <li><b>Map.</b> Switch to map to find cameras by location. Drag to move, scroll to zoom, and click a dot to open its camera.</li>
-      <li><b>Find.</b> Type a road or pick a region to narrow the grid and the map.</li>
+      <li><b>Watch.</b> Click any camera. Video runs about 20 seconds behind.</li>
+      <li><b>Clip.</b> Press the clapperboard, or its key, to keep the last <span class="n-secs">30</span> seconds.</li>
+      <li><b>Record.</b> The red dot starts a recording. The square ends it.</li>
+      <li><b>Save.</b> Open Clips to download your videos.</li>
+      <li><b>Go big.</b> Expand fills the page. The window icon floats a camera while you browse.</li>
+      <li><b>Find.</b> Search, pick a region, star favorites, or switch to the map.</li>
+      <li><b>Scan.</b> Lists cameras turned away from their usual view, often toward a crash or work zone.</li>
     </ol>
   </div>
+  <div id="oddpanel" class="pop" hidden>
+    <div class="phead"><h2 id="odd-title"></h2><span id="odd-age" class="meta"></span><span class="gap"></span><label class="check"><input id="odd-only" type="checkbox"> Only these</label><button id="odd-rescan" class="sm" data-icon="binoculars">Rescan</button></div>
+    <div id="odd-items"></div>
+    <p id="odd-note"></p>
+  </div>
+  <div id="livepanel" class="pop" hidden>
+    <div class="phead"><h2>Live</h2><span class="gap"></span><button id="live-stop" class="sm">Stop all</button></div>
+    <div id="live-items"></div>
+  </div>
   <div id="qpanel" class="pop" hidden>
-    <h2>Clips</h2>
+    <div class="phead"><h2>Clips</h2></div>
     <div id="qitems"></div>
-    <div class="qfoot"><button id="qall">save all</button><button id="qclear">clear</button></div>
+    <div class="pfoot"><button id="qall" class="primary" data-icon="download">Save all</button><button id="qclear">Clear</button></div>
   </div>
   <div id="settings" class="pop" hidden>
-    <label class="opt">Replay buffer <input id="replay" type="number" min="5" max="3600" step="5"> seconds</label>
-    <p>How far back a clip reaches.</p>
-    <label class="opt"><input id="merge" type="checkbox"> Merge overlaps</label>
-    <p>Clips of one camera that overlap in time become one video.</p>
-    <label class="opt"><input id="solo" type="checkbox"> One camera at a time</label>
-    <p>Connecting a camera disconnects the others.<br>Cameras that are recording stay connected.</p>
-    <label class="opt"><input id="autoremove" type="checkbox"> Remove clips after saving</label>
-    <p>Saved clips leave the clip list.</p>
-    <h2>Keybinds</h2>
+    <h2>Settings</h2>
+    <div class="set"><label for="replay"><span>Clip length</span></label><span class="unit"><input id="replay" type="number" min="5" max="3600" step="5"> s</span></div>
+    <label class="set"><span><span>Merge overlapping clips</span></span><input id="merge" type="checkbox"></label>
+    <label class="set"><span><span>One camera at a time</span><small>Recording and windowed cameras stay on.</small></span><input id="solo" type="checkbox"></label>
+    <label class="set"><span><span>Remove clips after saving</span></span><input id="autoremove" type="checkbox"></label>
+    <label class="set"><span><span>Scan every 10 minutes</span><small>About 150 MB per scan.</small></span><input id="autoscan" type="checkbox"></label>
+    <div class="keyhead"><h3>Keys</h3></div>
     <div id="keylist"></div>
-    <p>Click a key, then press the new one.</p>
     <p class="keys"><kbd>esc</kbd> cancel <kbd>⌫</kbd> clear</p>
   </div>
 </header>
-<main id="grid"></main>
+<main>
+  <div id="grid-head"><h2></h2><span class="n"></span></div>
+  <div id="grid"></div>
+</main>
 <section id="map" hidden>
-  <svg id="mapsvg" aria-label="camera map"></svg>
-  <div class="map-ctl"><button id="zoom-in" aria-label="zoom in">+</button><button id="zoom-out" aria-label="zoom out">−</button><button id="zoom-fit">fit</button></div>
+  <svg id="mapsvg" aria-label="Camera map"></svg>
   <div id="maptip" hidden></div>
+  <div class="map-legend"><span><i class="lg-live"></i>Playing</span><span><i class="lg-rec"></i>Recording</span><span><i class="lg-fav" data-icon="star"></i>Favorite</span><span><i class="lg-odd"></i>Unusual</span><span><i class="lg-cam"></i>Camera</span><span id="lg-missing"></span></div>
+  <div class="map-ctl"><button id="zoom-in" data-icon="plus" title="Zoom in" aria-label="Zoom in"></button><button id="zoom-out" data-icon="minus" title="Zoom out" aria-label="Zoom out"></button><button id="zoom-fit" data-icon="locate" title="Fit cameras" aria-label="Fit cameras"></button></div>
+  <div id="mapnote"></div>
 </section>
 <div id="wins"></div>
-<footer id="status"><span id="count"></span><span id="note"></span><span class="gap"></span><span id="mapnote"></span></footer>
+<div id="toast" role="status" hidden></div>
 <div id="shade" hidden></div>
 <script src="cameras.js"></script>
 <script src="basemap.js"></script>
@@ -69,5 +87,6 @@
 <script src="app.js"></script>
 <script src="mapview.js"></script>
 <script src="popout.js"></script>
+<script src="scan.js"></script>
 </body>
 </html>

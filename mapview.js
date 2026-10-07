@@ -23,7 +23,7 @@ svg.querySelector('.m-labels').innerHTML = Object.entries(byRegion).map(([name, 
   return `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)})"><text>${esc(name)}</text></g>`;
 }).join('');
 
-const star = STAR_ICON.match(/d="([^"]+)"/)[1];
+const star = ICON.star.match(/d="([^"]+)"/)[1];
 svg.querySelector('.m-dots').innerHTML = placed.map((c) => {
   const [x, y] = project(c);
   return `<g class="m-dot" data-i="${c.i}" transform="translate(${x.toFixed(2)} ${y.toFixed(2)})"><g class="m-shape">` +
@@ -32,9 +32,8 @@ svg.querySelector('.m-dots').innerHTML = placed.map((c) => {
 const dots = new Map([...svg.querySelectorAll('.m-dot')].map((d) => [cams[d.dataset.i], d]));
 
 const missing = cams.length - placed.length;
-document.getElementById('mapnote').textContent =
-  (missing ? `${missing} camera${missing > 1 ? 's' : ''} without a known location aren't shown · ` : '') +
-  'Outlines: US Census · Some locations: © OpenStreetMap contributors';
+document.getElementById('lg-missing').textContent = missing ? `${missing} not on the map` : '';
+document.getElementById('mapnote').textContent = 'Outlines: US Census · Some locations: © OpenStreetMap contributors';
 
 function paintDots() {
   for (const [c, d] of dots) {
@@ -42,6 +41,7 @@ function paintDots() {
     d.classList.toggle('on', !!c.live);
     d.classList.toggle('rec', !!c.rec);
     d.classList.toggle('fav', favs.has(c.id));
+    d.classList.toggle('odd', !!c.odd);
   }
 }
 
@@ -107,14 +107,16 @@ svg.addEventListener('pointermove', (e) => {
   if (d) showTip(cams[d.dataset.i], e);
   else hideTip();
 });
-svg.addEventListener('pointerup', (e) => {
+svg.addEventListener('pointerup', () => {
   const d = drag && !drag.moved && drag.dot;
-  drag = null;
-  svg.classList.remove('dragging');
   if (d) {
     hideTip();
     openMax(cams[d.dataset.i]);
   }
+});
+svg.addEventListener('lostpointercapture', () => {
+  drag = null;
+  svg.classList.remove('dragging');
 });
 svg.addEventListener('pointerleave', hideTip);
 
@@ -131,8 +133,8 @@ function showTip(c, e) {
     tip.querySelector('.tipname').textContent = c.name;
   }
   const box = mapEl.getBoundingClientRect();
-  tip.style.left = `${Math.min(e.clientX - box.left + 14, box.width - 200)}px`;
-  tip.style.top = `${Math.min(e.clientY - box.top + 14, box.height - 170)}px`;
+  tip.style.left = `${Math.min(e.clientX - box.left + 14, box.width - 250)}px`;
+  tip.style.top = `${Math.min(e.clientY - box.top + 14, box.height - 230)}px`;
   tip.hidden = false;
   if (!tipFrame) tipFrame = requestAnimationFrame(drawTip);
 }
@@ -149,7 +151,7 @@ function drawTip() {
   if (!c) return;
   const video = c.live && c.view.classList.contains('live') ? c.view.querySelector('video') : null;
   tip.classList.toggle('live', !!video);
-  tip.querySelector('.meta').textContent = c.region + (video ? ' · live' : c.live ? ' · connecting' : '');
+  tip.querySelector('.meta').textContent = c.region + (c.live && !video ? ' · connecting' : '');
   if (video) drawVideo(tipCanvas, video);
   tipFrame = requestAnimationFrame(drawTip);
 }
@@ -164,13 +166,28 @@ region.addEventListener('change', () => {
 
 document.addEventListener('camchange', paintDots);
 
+function pulse(d, cls = 'pulse') {
+  d.classList.remove('pulse', 'found');
+  void d.getBoundingClientRect();
+  d.classList.add(cls);
+}
+
 document.addEventListener('clipped', (e) => {
   const d = dots.get(e.detail);
-  if (!d || mapEl.hidden) return;
-  d.classList.remove('pulse');
-  void d.getBoundingClientRect();
-  d.classList.add('pulse');
+  if (d && !mapEl.hidden) pulse(d);
 });
+
+// centers the map on a camera, zooming in to city scale if needed; false if it has no location
+function focusDot(c) {
+  const d = dots.get(c);
+  if (!d) return false;
+  const [x, y] = project(c);
+  const w = Math.min(view[2], 60), h = view[3] * w / view[2];
+  view = [x - w / 2, y - h / 2, w, h];
+  apply();
+  pulse(d, 'found');
+  return true;
+}
 
 const header = document.querySelector('header');
 new ResizeObserver(() => {

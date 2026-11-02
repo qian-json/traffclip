@@ -107,7 +107,7 @@ class Player {
 
   kick() {
     const v = this.video;
-    if (this.started || !this.ready || !this.sb || this.sb.updating || this.q.length || !v.buffered.length) return;
+    if (this.closed || this.started || !this.ready || !this.sb || this.sb.updating || this.q.length || !v.buffered.length) return;
     this.started = true;
     const end = v.buffered.end(v.buffered.length - 1);
     v.currentTime = Math.max(v.buffered.start(0), end - this.delay);

@@ -155,7 +155,7 @@ function paintFav(c) {
 }
 
 // connection trouble shows after the region; 'live' needs no words, the chip says it
-function status(c, text, bad) {
+function setStatus(c, text, bad) {
   c.st.textContent = text && text !== 'live' ? ' · ' + text : '';
   c.st.classList.toggle('bad', !!bad);
 }
@@ -177,7 +177,7 @@ function connect(c) {
   c.view.append(video);
   c.buf = [];
   c.live = new Live(c.url, video, {
-    status: (text, bad) => status(c, text, bad),
+    status: (text, bad) => setStatus(c, text, bad),
     samples: (s) => onSamples(c, s),
   });
   sync(c);
@@ -190,7 +190,7 @@ function disconnect(c) {
   c.buf = [];
   c.view.querySelector('video')?.remove();
   c.view.classList.remove('live', 'loading');
-  status(c, '');
+  setStatus(c, '');
   sync(c);
 }
 
@@ -656,7 +656,6 @@ cams.forEach(paintFav);
 updateFavs();
 // also applies a search the browser restored on reload
 filter();
-
 
 const MODS = ['Control', 'Alt', 'Shift', 'Meta'];
 

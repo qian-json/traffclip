@@ -85,6 +85,7 @@ svg.addEventListener('wheel', (e) => {
 
 let drag = null;
 svg.addEventListener('pointerdown', (e) => {
+  if (e.button !== 0) return;
   drag = { x: e.clientX, y: e.clientY, moved: false, dot: e.target.closest('.m-dot') };
   svg.setPointerCapture(e.pointerId);
 });

@@ -15,7 +15,7 @@ Handoff document for traffclip. A new maintainer, human or agent, should be able
 
 - A static web page that shows every live Louisiana DOTD (511LA) traffic camera, plays any of them live, and saves clips and recordings as MP4. The owner plans to add camera sources beyond 511LA (the project was renamed from "511la" on 2026-09-29 for that reason).
 - Features: camera grid with search, region picker, and favorites filter; live playback through a custom HLS → MSE pipeline; replay-buffer clips (default 30 s) with per-camera keybinds; recordings; a clip list with optional merging of overlapping clips; a large in-page view; floating windows; a map view; a Live menu of playing cameras; an anomaly scan that flags cameras turned away from their usual view.
-- Status 2026-10-07: 518 cameras; all features above work; dark-only interface after a redesign and two "look less AI-generated" passes.
+- Status 2026-11-01: 518 cameras; all features above work; dark-only interface after a redesign and two "look less AI-generated" passes; smoke test passes.
 
 ## Quick start
 
@@ -24,7 +24,8 @@ Handoff document for traffclip. A new maintainer, human or agent, should be able
   - `python3 tools/refresh.py`: find live cameras, name and locate them, grab stills, write `cameras.js` and `images/`. Flags: `--new-only`, `--no-frames`, `--no-scan` (rename and relocate only), `--frames-only`.
   - `python3 tools/refresh.py --refs day` (in daylight) and `--refs night` (after dark): capture each camera's usual view into `refs.js`. `--refs-from-stills` seeds day views from `images/`.
   - `python3 tools/basemap.py`: rebuild `basemap.js` from US Census files.
-- Test: see "Testing". There is no automated test suite in the repository; tests are headless-Chrome scripts written per change.
+- Test: `node tools/test/cdp.mjs tools/test/smoke.mjs` from the repo root (Node 22, Chrome, ffmpeg; hits the live streams). See "Testing".
+- Entry point for agents: `AGENTS.md` (also loaded through `CLAUDE.md`). It points here.
 
 ## Working with the owner
 
@@ -70,6 +71,9 @@ Handoff document for traffclip. A new maintainer, human or agent, should be able
 | `tools/names.json` | Camera names read from on-video captions. Overrides open-data names. |
 | `tools/locations.json` | Location cache and manual corrections. |
 | `tools/basemap.py` | Rebuilds `basemap.js` from US Census files. |
+| `tools/test/cdp.mjs` | Headless-Chrome driver: launches Chrome on a dedicated port, opens `index.html` from disk, runs a steps module. |
+| `tools/test/smoke.mjs` | End-to-end smoke test: play, key clips, merge, record, window, map, popovers, save, decode. |
+| `AGENTS.md` | Entry point for agents and new maintainers; `CLAUDE.md` imports it. |
 | `README.md` | User-facing usage. |
 | `docs.md` | This document. |
 
@@ -160,7 +164,7 @@ Handoff document for traffclip. A new maintainer, human or agent, should be able
 - Comparison: edge directions with doubled angles (contrast polarity does not matter), weighted by contrast-normalized strength, ignoring pixels at or above 215 and their 1 px halo, and the top 11 rows (burned-in caption and clock). The best correlation over ±4 px shifts is the similarity.
 - A camera is flagged when its similarity to every usual view for the current light is below 0.25. Usual views: `refs.js` (day or night by sun elevation at the camera; both within ±3° of the horizon) plus views marked usual in the results ("Mark usual"). "Moved since last scan" means similarity below 0.2 to the previous scan of the same light within 3 hours.
 - Frames with little clear structure (under 10% of pixels with an edge above 16 gray levels outside glare) count as "too dark to judge" and are not flagged.
-- A scan covers the cameras the search, region, and favorites filters show. "Only these" filters the grid and map to flagged cameras but does not narrow the next scan.
+- A scan covers the cameras the search, region, and favorites filters show. With nothing on screen it does not start (toast "No cameras on screen to scan"), so saved results are never replaced by an empty scan. A stopped scan keeps no results and leaves the previous-scan baseline (`last`) untouched. "Only these" filters the grid and map to flagged cameras but does not narrow the next scan.
 - False alarms: about three in four flags at night are false (glare, rain, dirty lenses, fog). The interface no longer says so; the results list sorts the least similar first, which puts real moves near the top.
 - Interface: the Scan button (binoculars icon, amber when anything is flagged) reads "Scan", "Scanning N%", or "N unusual" and opens the scan menu: last scan time and age, progress bar with "N% · done of total", the last scan's numbers, what a scan covers ("Checks the N cameras on screen, about M MB" at 0.3 MB per camera), Start scan / Stop / Scan again, and "View N unusual". A user-started scan that flags anything opens the results panel when it finishes. Results rows show a thumbnail, "region · reason · N% match", and Open, Window, and Mark usual. Flagged tiles get an amber ring and an UNUSUAL tag (while not playing); map dots an amber ring. "Rescan" in the results opens the menu and starts a scan; during an auto-scan it lets that scan finish and report back.
 - Measurements, 2026-10-03 at night (510 cameras online):
@@ -219,8 +223,8 @@ These facts were removed from the screen on purpose (hints and disclaimers read 
 
 ## Testing
 
-- Test under `file://` in headless Chrome driven over the DevTools protocol. Node 22 has a global `WebSocket`, so a small driver script needs no packages. Keep test scripts outside the repository (the deliverable has no test files).
-- Driver outline: launch Chrome with `--headless=new --remote-debugging-port=<port> --user-data-dir=<scratch profile> --autoplay-policy=no-user-gesture-required`; `Target.createTarget`, `Target.attachToTarget` (flatten); `Page.navigate` to the `file://` URL; drive with `Runtime.evaluate` (`awaitPromise`, `returnByValue`), `Input.dispatchMouseEvent`, and `Input.dispatchKeyEvent`; capture with `Page.captureScreenshot`; collect downloads with `Browser.setDownloadBehavior`.
+- Test under `file://` in headless Chrome driven over the DevTools protocol. Node 22 has a global `WebSocket`, so the driver needs no packages. The driver and tests live in `tools/test/`; the page never loads them.
+- `tools/test/cdp.mjs` gives a steps module `{ ev, sleep, click, key, shot, cdp, dl }`; `KEEP=1` keeps its temp profile and downloads. Driver outline: launch Chrome with `--headless=new --remote-debugging-port=<port> --user-data-dir=<scratch profile> --autoplay-policy=no-user-gesture-required`; `Target.createTarget`, `Target.attachToTarget` (flatten); `Page.navigate` to the `file://` URL; drive with `Runtime.evaluate` (`awaitPromise`, `returnByValue`), `Input.dispatchMouseEvent`, and `Input.dispatchKeyEvent`; capture with `Page.captureScreenshot`; collect downloads with `Browser.setDownloadBehavior`.
 - All top-level names are globals, so tests can call `connect(cams[0])`, `openMax`, `popOut`, `runScan`, `setRegion`, `filter`, and read `state`, `scanState`, `cams[i].el`.
 - Gotchas:
   - Use a dedicated remote-debugging port and refuse to start if it is taken; another browser on the same port silently receives the commands.
@@ -236,9 +240,10 @@ These facts were removed from the screen on purpose (hints and disclaimers read 
 
 - Day usual views are the 2026-09-29 stills (single frames); run `refresh.py --refs day` in daylight for better day scans.
 - Alexandria night views look unreliable: a 2026-10-03 23:47 scan flagged 11 of 17 cameras at 1–11% similarity. Recapture with `--refs night`.
+- After more than three player errors in 60 s, playback stays stopped (the error shows after the region) until the camera is reconnected; fetching and clips continue. Self-healing on a later tick is an open option.
 - Map city labels can overlap camera dots.
 - At phone width the header wraps to about a third of the screen.
-- De-AI audit of 2026-10-07: applied the map labels, hints, onboarding line, panel-title counts, the Live panel title (was "Playing"), empty states, scan disclaimer, tooltip casing, settings hints, large-view Esc hint, keys hint, plain-clip toast, map note, and scan icon. Still awaiting the owner's decision: monospace wordmark; Help's numbered bold-lead steps; "·" separators (16 in the interface); UNUSUAL tag; scan-menu stats grid; the unusual count shown four times; "N% match"; "Camera" legend entry; the clip badge's sway and drift; 3D keycaps; REC tag styling; dark-only theme; Lucide everywhere; white primary buttons. Kept by choice: count badges, the round play button, the floating clip badge.
+- De-AI audit of 2026-10-07: applied the map labels, hints, onboarding line, panel-title counts, the Live panel title (was "Playing"), empty states, scan disclaimer, tooltip casing, settings hints, large-view Esc hint, keys hint, plain-clip toast, map note, and scan icon. Still awaiting the owner's decision: monospace wordmark; Help's numbered bold-lead steps; "·" separators (14 in the interface); UNUSUAL tag; scan-menu stats grid; the unusual count shown four times; "N% match"; "Camera" legend entry; the clip badge's sway and drift; 3D keycaps; REC tag styling; dark-only theme; Lucide everywhere; white primary buttons. Kept by choice: count badges, the round play button, the floating clip badge.
 
 ## Repository
 

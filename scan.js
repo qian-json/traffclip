@@ -283,6 +283,9 @@ async function sampleCamera(c, signal) {
   keys.forEach((parts, i) => dec.decode(new EncodedVideoChunk({ type: 'key', timestamp: i * 1e6, data: avcc(parts) })));
   try {
     await dec.flush();
+  } catch (e) {
+    thumb?.then((b) => b.close(), () => {});
+    throw e;
   } finally {
     if (dec.state !== 'closed') dec.close();
   }
@@ -290,7 +293,7 @@ async function sampleCamera(c, signal) {
   return { gray: median(grays), thumb: await thumb };
 }
 
-async function judge(c, gray, when) {
+async function judge(c, gray, when, signal) {
   if (structure(gray) < SCAN_STRUCTURE) return { unclear: true };
   const cur = describe(gray);
   const light = regimes(c, when);
@@ -299,7 +302,7 @@ async function judge(c, gray, when) {
     if (light.includes(u.regime)) usual.push(describe(u.gray));
   }
   const last = await scanDb.get('last', c.id);
-  await scanDb.put('last', c.id, { t: when.getTime(), light, gray });
+  if (!signal?.aborted) await scanDb.put('last', c.id, { t: when.getTime(), light, gray });
 
   const home = usual.length ? Math.max(...usual.map((u) => similarity(cur, u))) : null;
   const recent = last && when - last.t < 3 * 3600e3 && last.light.some((r) => light.includes(r));
@@ -322,6 +325,8 @@ async function runScan(quiet) {
   scanState.running = ctl;
   // "show only these" narrows the grid, not what gets scanned
   const list = cams.filter((c) => shows(c, false));
+  // an empty scan would replace the saved results with nothing
+  if (!list.length) return notify('No cameras on screen to scan');
   const results = new Map();
   let done = 0, offline = 0, unclear = 0;
   const when = new Date();
@@ -341,10 +346,14 @@ async function runScan(quiet) {
       const c = queue.shift();
       try {
         const s = await sampleCamera(c, ctl.signal);
-        const r = await judge(c, s.gray, when);
+        let r;
+        try {
+          r = await judge(c, s.gray, when, ctl.signal);
+        } finally {
+          if (!r || r.unclear) s.thumb?.close();
+        }
         if (r?.unclear) unclear++;
         if (r && !r.unclear) results.set(c, { ...r, thumb: s.thumb });
-        else s.thumb?.close();
       } catch (e) {
         if (!ctl.signal.aborted) offline++;
       }

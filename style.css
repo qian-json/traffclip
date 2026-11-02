@@ -223,7 +223,6 @@ header > button.on, #scan-btn.on { background: var(--raise); }
 input[type=number] { width: 60px; height: 28px; padding: 0 8px; border: 1px solid var(--line); border-radius: 4px; background: var(--bg); font: 13px var(--mono); }
 .keyhead { display: flex; align-items: baseline; gap: 8px; padding: 14px 0 6px; border-top: 1px solid var(--soft); }
 .keyhead h3 { margin: 0; font-size: 13px; font-weight: 600; }
-.keyhead small { display: inline; }
 .krow { display: flex; align-items: center; gap: 8px; padding: 3px 0; }
 .kname { display: flex; flex: 1; align-items: center; gap: 6px; min-width: 0; }
 .kname > span:last-child { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
@@ -250,7 +249,6 @@ button.kbd.on { background: var(--text); border-color: var(--text); color: var(-
 
 main { padding: 18px 20px 64px; }
 
-
 #grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px 14px; }
 
 #grid-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 12px; }
@@ -265,12 +263,15 @@ main { padding: 18px 20px 64px; }
 .lthumb canvas, .lrow.on .lthumb img { display: none; }
 .lrow.on .lthumb canvas { display: block; }
 .lrow .qname { margin-left: 2px; }
-.lrow small { display: block; overflow: hidden; text-overflow: ellipsis; }
+.lrow .qname small { display: block; overflow: hidden; text-overflow: ellipsis; }
 .lrow .ic { width: 28px; height: 28px; border: 0; color: var(--dim); }
 .lrow .ic:hover:not(:disabled) { background: var(--raise); color: var(--text); }
 .lrow .stop svg { width: 11px; height: 11px; fill: currentColor; }
 
 .cell { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+
+.cell.flash .view { animation: flash 2s ease-in; }
+@keyframes flash { 0%, 50% { outline: 2px solid var(--text); outline-offset: 3px; } 100% { outline: 2px solid transparent; outline-offset: 3px; } }
 
 .view { position: relative; aspect-ratio: 3 / 2; overflow: hidden; background: #000; border-radius: 2px; }
 .view img, .view video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
@@ -466,7 +467,6 @@ body.maxed { overflow: hidden; }
   text-overflow: ellipsis;
   transform: translateX(-50%);
 }
-
 
 @media (prefers-reduced-motion: reduce) {
   .floater { animation: fade 1.2s ease-in forwards; }
